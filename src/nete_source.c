@@ -2641,7 +2641,7 @@ char* stringify_nodes(void) {
     }
 
     json_add_string(name, current_nodegroup.name, output_code, end);
-    json_add_string(fileName, current_nodegroup.fileName, output_code, end);
+    json_add_string(fileName, "", output_code, end);
     json_add_string(destination, current_nodegroup.destination, output_code, end);
     json_add_number(topNode, current_nodegroup.topNode, output_code, end);
     json_add_number(zoomScaleFactor, current_nodegroup.zoomScaleFactor, output_code, end);
