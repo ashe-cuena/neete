@@ -14,7 +14,7 @@ So far this progam has been tested on Linux x86 and Raspberry Pi. The code requi
 ````
 sudo apt-get install build-essential libgtk-3-dev libgtksourceview-3.0-dev
 ````
-Then compile the source by running:
+The program source is available from https://github.com/ashe-cuena/nete . After downloading, compile the source by running:
 ````
 make
 ````
