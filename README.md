@@ -3,7 +3,7 @@
 ## Introduction
 Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.
 
-NETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
+NETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview with the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
 
 1. Drawing pictures on a screen,
 2. Mathematical nodes and arcs.
@@ -57,9 +57,8 @@ The same one node does both jobs but in different scenarios. The determinant is 
 
 Nodes also carry with them two other visible features, which are title and priority. A description field is included and this is more or less a comment feature with no real consequence on operations.
 ### Codebox - Head, Tail and Textbox
-Codebox structure             |  Real CodeBox
-:-------------------------:|:-------------------------:
-![Codebox Structure](/images/codebox_struct.png) | ![Codebox Example](/images/codeboxwithcode2.png)
+
+![Codebox Structure](/images/codebox_struct.png)  ![Codebox Example](/images/codeboxwithcode2.png)
 
 On the inside of a node there are three other important text fields, which are the head, tail and textbox. These are pertinent for the actual low level of operations and they form the basis of the text. Upon rendering a codebox, these elements are batched in the order:
 
