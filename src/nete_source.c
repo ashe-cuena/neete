@@ -266,6 +266,7 @@ int node_being_edited = -1;
 int node_group_being_edited = -1;
 int node_being_dragged = -1;
 int node_being_resized = -1;
+int node_displacement_count = 1;
 
 int *rendered_data;
 int *rendered_counts;
@@ -850,6 +851,124 @@ gboolean on_dlg_about_delete_event (GtkWidget *widget, GdkEvent  *event, gpointe
     gtk_widget_hide(widget);
 
     return TRUE;
+}
+void on_btn_codebox_tocodebox_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
+    gchar *selected_text;
+    int* temp_contained_array = dynarray_create(int);
+    int top_node;
+    int newnodeID;
+
+    GtkTextIter start;
+    GtkTextIter end;
+
+    if(gtk_text_buffer_get_selection_bounds (app_wdgts->e_txt_codebox_code, &start, &end)) {
+
+        selected_text = gtk_text_buffer_get_text(app_wdgts->e_txt_codebox_code, &start, &end, FALSE);
+
+        gtk_text_buffer_delete_selection (app_wdgts->e_txt_codebox_code, FALSE, FALSE);
+
+        top_node = current_nodegroup.node_group[node_being_edited].cont_by;
+
+        newnodeID = node_group_push(
+                        current_nodegroup.node_group[node_being_edited].x + node_displacement_count * 5,
+                        current_nodegroup.node_group[node_being_edited].y + node_displacement_count * 5,
+                        100,
+                        20,
+                        -1,
+                        -1,
+                        -1,
+                        top_node,
+                        5,
+                        temp_contained_array,
+                        "New Node",
+                        "",
+                        "",
+                        "",
+                        selected_text,
+                        -1
+                    );
+
+        if(top_node != -1 ) {
+            dynarray_push(current_nodegroup.node_group[top_node].contained, newnodeID);
+        }
+
+        check_obscuring(newnodeID);
+        check_obscured(newnodeID);
+
+        dynarray_destroy(temp_contained_array);
+        g_free(selected_text);
+
+        gtk_widget_queue_draw(app_wdgts->drawingArea);
+        deactivate_quit();
+
+        node_displacement_count ++;
+
+    }
+}
+void on_btn_codebox_tohead_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
+    gchar *selected_text;
+    const gchar *head_text;
+
+    char* final_text;
+
+    int* temp_contained_array = dynarray_create(int);
+    int top_node;
+    int newnodeID;
+
+    GtkTextIter start;
+    GtkTextIter end;
+
+    if(gtk_text_buffer_get_selection_bounds (app_wdgts->e_txt_codebox_code, &start, &end)) {
+        string_init(&final_text);
+
+        selected_text = gtk_text_buffer_get_text(app_wdgts->e_txt_codebox_code, &start, &end, FALSE);
+
+        gtk_text_buffer_delete_selection (app_wdgts->e_txt_codebox_code, FALSE, FALSE);
+
+        head_text = gtk_entry_get_text (app_wdgts->e_txt_codebox_head);
+        string_set(&final_text, head_text);
+        string_add(&final_text, " ");
+        string_add(&final_text, selected_text);
+
+        gtk_entry_set_text (app_wdgts->e_txt_codebox_head, final_text);
+
+        string_free(&final_text);
+        g_free(selected_text);
+    }
+}
+void on_btn_codebox_totail_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
+    gchar *selected_text;
+    const gchar *tail_text;
+
+    char* final_text;
+
+    int* temp_contained_array = dynarray_create(int);
+    int top_node;
+    int newnodeID;
+
+    GtkTextIter start;
+    GtkTextIter end;
+
+
+    if(gtk_text_buffer_get_selection_bounds (app_wdgts->e_txt_codebox_code, &start, &end)) {
+        string_init(&final_text);
+
+        selected_text = gtk_text_buffer_get_text(app_wdgts->e_txt_codebox_code, &start, &end, FALSE);
+
+        gtk_text_buffer_delete_selection (app_wdgts->e_txt_codebox_code, FALSE, FALSE);
+
+        tail_text = gtk_entry_get_text (app_wdgts->e_txt_codebox_tail);
+
+        string_set(&final_text, selected_text);
+        string_add(&final_text, " ");
+        string_add(&final_text, tail_text);
+
+        gtk_entry_set_text (app_wdgts->e_txt_codebox_tail, final_text);
+
+        string_free(&final_text);
+        g_free(selected_text);
+
+    }
 }
 int main(int argc, char **argv)  {
     GtkWidget *window;
@@ -1715,6 +1834,7 @@ void launchBox(int node, int line_start, app_widgets *app_wdgts) {
     } else {
         gtk_window_move (app_wdgts->w_dlg_codebox, codeboxWindowPos.x, codeboxWindowPos.y);
     }
+    node_displacement_count = 1;
 }
 void renderData() {
     clearRenderedData();
@@ -2924,3 +3044,4 @@ void mark_unsaved(app_widgets *app_wdgts) {
                                      gtk_notebook_get_nth_page (app_wdgts->t_ntb_nete_tabs, current_codeBox), tab_name);
     string_free(&tab_name);
 }
+
