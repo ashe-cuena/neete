@@ -252,6 +252,7 @@ void mark_unsaved(app_widgets *app_wdgts);
 bool check_unsaved(void);
 
 GtkWidget *pmenu;
+cairo_pattern_t *pattern;
 
 int screenWidth = 4095;
 int screenHeight = 2047;
@@ -986,6 +987,10 @@ int main(int argc, char **argv)  {
     PangoAttrList *attrlist = pango_attr_list_new();
     PangoAttribute *attr = pango_attr_size_new_absolute(20 * PANGO_SCALE);
 
+    RGB tempcolour;
+    cairo_surface_t *pattern_surface;
+    cairo_t *pattcr;
+
     app_widgets     *widgets = g_slice_new(app_widgets);
 
     gtk_init(&argc,&argv);
@@ -998,6 +1003,7 @@ int main(int argc, char **argv)  {
         printf("gtk_builder_add_from_file FAILED %s\n",error->message);
         return EXIT_FAILURE;
     }
+
     init_arrays();
     init_nodes();
     window  = GTK_WIDGET (gtk_builder_get_object (builder,"window"));
@@ -1047,12 +1053,14 @@ int main(int argc, char **argv)  {
     gtk_source_buffer_set_language(widgets->e_txt_codebox_code, language);
     pmenu = gtk_menu_new();
 
+
     newnodeMi = gtk_menu_item_new_with_label("New Node");
     gtk_widget_show(newnodeMi);
     gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), newnodeMi);
 
     g_signal_connect(G_OBJECT(newnodeMi), "activate",
                      G_CALLBACK(nete_new_node), widgets->drawingArea);
+
     popup_separator1 = gtk_separator_menu_item_new ();
     gtk_widget_show(popup_separator1);
     gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), popup_separator1);
@@ -1066,12 +1074,12 @@ int main(int argc, char **argv)  {
     gtk_widget_show(pastenodeMi);
     gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), pastenodeMi);
 
+    g_signal_connect(G_OBJECT(pastenodeMi), "activate",
+                     G_CALLBACK(nete_paste_node), widgets->drawingArea);
+
     popup_separator2 = gtk_separator_menu_item_new ();
     gtk_widget_show(popup_separator2);
     gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), popup_separator2);
-
-    g_signal_connect(G_OBJECT(pastenodeMi), "activate",
-                     G_CALLBACK(nete_paste_node), widgets->drawingArea);
     focusMi = gtk_menu_item_new_with_label("Focus");
     gtk_widget_show(focusMi);
     gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), focusMi);
@@ -1092,7 +1100,27 @@ int main(int argc, char **argv)  {
 
     gtk_widget_hide(widgets->l_lbl_codebox_focus);  // hide it here after the show_all command, otherwise it shows again
 
+// ============== pattern for oversmall details ====================
+    pattern_surface = cairo_image_surface_create(
+                          CAIRO_FORMAT_ARGB32, 10, 10);
+
+    pattcr = cairo_create(pattern_surface);
+    tempcolour = colorConverter(0x888888);
+    cairo_set_source_rgba (pattcr, tempcolour.r, tempcolour.g, tempcolour.b, 0.75);
+    cairo_move_to(pattcr, 0, 0);
+    cairo_line_to(pattcr, 10, 10);
+    cairo_move_to(pattcr, 10, 0);
+    cairo_line_to(pattcr, 0, 10);
+    cairo_stroke(pattcr);
+    cairo_destroy(pattcr);
+
+    pattern = cairo_pattern_create_for_surface(pattern_surface);
+    cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
+// ===========================================================
+
     gtk_main();
+    cairo_surface_destroy(pattern_surface);
+    cairo_pattern_destroy(pattern);
     g_slice_free(app_widgets, widgets);
     return EXIT_SUCCESS;
 }
@@ -1262,21 +1290,27 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     cairo_set_dash(cr, dashnone, 0, 0);
 //===================================================
 
+    if(children_scale_factor > 0.35) {
 //============  flanks =================================
-    tempcolour = colorConverter(0x555555);
-    cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
-    cairo_rectangle(cr, x + 2, y + head_height +spacer + descript_height + spacer + 2, 13, body_height - 4);
-    cairo_fill(cr);
-    cairo_rectangle(cr, x + body_width - 15, y + head_height +spacer + descript_height + spacer + 2, 13, body_height - 4);
-    cairo_fill(cr);
+        tempcolour = colorConverter(0x555555);
+        cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
+        cairo_rectangle(cr, x + 2, y + head_height +spacer + descript_height + spacer + 2, 13, body_height - 4);
+        cairo_fill(cr);
+        cairo_rectangle(cr, x + body_width - 15, y + head_height +spacer + descript_height + spacer + 2, 13, body_height - 4);
+        cairo_fill(cr);
 //========================================================
+    } else {
+        cairo_set_source(cr, pattern);
+        tempcolour = colorConverter(0x444444);
+        cairo_rectangle(cr, x + 5, y + head_height +spacer + descript_height + spacer + 5, body_width - 10, body_height - 10);
+        cairo_fill(cr);
+
+    }
 
 // ============ resize tab ======================================
     tempcolour = colorConverter(0x777777);
-
     cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
     cairo_rectangle(cr, x + body_width - 15*scale_factor, y + body_height + head_height +spacer + descript_height + spacer - 15*scale_factor, 15*scale_factor - 2, 15*scale_factor - 2);
-// use the resize box without scaling instead
     cairo_fill(cr);
 // ================================================================
 
@@ -1301,6 +1335,7 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     }
 //=====================================================
 
+
     if(current_nodegroup.node_group[node].width > 75 && current_nodegroup.node_group[node].height > 35) {
         tempcolour = colorConverter(0xcccccc);
         cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
@@ -1310,6 +1345,7 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
 
         draw_text_in_box(cr, current_nodegroup.node_group[node].real_code, x + spacer, y + head_height+spacer, body_width, body_height);
     }
+
     tempcolour = colorConverter(0xffffff);
 
     cairo_select_font_face (cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
@@ -1320,73 +1356,83 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     unsigned long int i = 0;
 
     int *obscured_nodes;
-    obscured_nodes = dynarray_create(int);
 
-    for (i = 0; i < dynarray_length(current_nodegroup.node_group[node].contained); i++) {
-        contained_node = current_nodegroup.node_group[node].contained[i];
-        if(!current_nodegroup.node_group[contained_node].obscured) {
+    if(children_scale_factor > 0.35) {
+        obscured_nodes = dynarray_create(int);
 
+        for (i = 0; i < dynarray_length(current_nodegroup.node_group[node].contained); i++) {
+            contained_node = current_nodegroup.node_group[node].contained[i];
+
+            if(!current_nodegroup.node_group[contained_node].obscured) {
+
+                inner_node_modes.last_touched = false;
+                inner_node_modes.last_read = false;
+                inner_node_modes.libre = false;
+                inner_node_modes.obscured = false;
+                inner_node_modes.being_dragged = false;
+                inner_node_modes.being_resized = false;
+
+                if(contained_node == current_nodegroup.last_node_read) {
+                    inner_node_modes.last_read = true;
+                }
+                if(contained_node == node_being_dragged) {
+                    inner_node_modes.being_dragged = true;
+                }
+                if(contained_node == node_being_resized) {
+                    inner_node_modes.being_resized = true;
+                }
+                if(!no_node_selected && contained_node == tempNodeZone.node) {
+                    inner_node_modes.last_touched = true;
+                }
+
+                if(current_nodegroup.node_group[contained_node].x < 0 || current_nodegroup.node_group[contained_node].y < 0) {
+                    inner_node_modes.libre = true;
+                    draw_libre_arc(cr, contained_node,x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
+                }
+
+                drawNode(cr, contained_node, x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, inner_node_modes);
+                if (current_nodegroup.node_group[contained_node].next != -1) {
+                    draw_arc(cr, contained_node, current_nodegroup.node_group[contained_node].next, x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
+                }
+            } else {
+
+                dynarray_push(obscured_nodes, contained_node);
+            }
+        }
+
+        for (i = 0; i < dynarray_length(obscured_nodes); i++) {
             inner_node_modes.last_touched = false;
             inner_node_modes.last_read = false;
             inner_node_modes.libre = false;
-            inner_node_modes.obscured = false;
+            inner_node_modes.obscured = true;
             inner_node_modes.being_dragged = false;
             inner_node_modes.being_resized = false;
 
-            if(contained_node == current_nodegroup.last_node_read) {
+            if(obscured_nodes[i] == current_nodegroup.last_node_read) {
                 inner_node_modes.last_read = true;
             }
-            if(contained_node == node_being_dragged) {
+            if(obscured_nodes[i] == node_being_dragged) {
                 inner_node_modes.being_dragged = true;
             }
-            if(contained_node == node_being_resized) {
+            if(obscured_nodes[i] == node_being_resized) {
                 inner_node_modes.being_resized = true;
             }
-            if(!no_node_selected && contained_node == tempNodeZone.node) {
+            if(!no_node_selected && obscured_nodes[i] == tempNodeZone.node) {
                 inner_node_modes.last_touched = true;
             }
-            if(current_nodegroup.node_group[contained_node].x < 0 || current_nodegroup.node_group[contained_node].y < 0) {
-                inner_node_modes.libre = true;
-                draw_libre_arc(cr, contained_node,x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-            }
-            drawNode(cr, contained_node, x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, inner_node_modes);
-            if (current_nodegroup.node_group[contained_node].next != -1) {
-                draw_arc(cr, contained_node, current_nodegroup.node_group[contained_node].next, x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-            }
-        } else {
-            dynarray_push(obscured_nodes, contained_node);
-        }
-    }
-    for (i = 0; i < dynarray_length(obscured_nodes); i++) {
-        inner_node_modes.last_touched = false;
-        inner_node_modes.last_read = false;
-        inner_node_modes.libre = false;
-        inner_node_modes.obscured = true;
-        inner_node_modes.being_dragged = false;
-        inner_node_modes.being_resized = false;
 
-        if(obscured_nodes[i] == current_nodegroup.last_node_read) {
-            inner_node_modes.last_read = true;
+            if(current_nodegroup.node_group[obscured_nodes[i]].x < 0 || current_nodegroup.node_group[obscured_nodes[i]].y < 0) {
+                inner_node_modes.libre = true;
+                draw_libre_arc(cr, obscured_nodes[i],x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
+            }
+
+            drawNode(cr, obscured_nodes[i], x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, inner_node_modes);
+            if (current_nodegroup.node_group[obscured_nodes[i]].next != -1) {
+                draw_arc(cr, obscured_nodes[i], current_nodegroup.node_group[obscured_nodes[i]].next, x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
+            }
         }
-        if(obscured_nodes[i] == node_being_dragged) {
-            inner_node_modes.being_dragged = true;
-        }
-        if(obscured_nodes[i] == node_being_resized) {
-            inner_node_modes.being_resized = true;
-        }
-        if(!no_node_selected && obscured_nodes[i] == tempNodeZone.node) {
-            inner_node_modes.last_touched = true;
-        }
-        if(current_nodegroup.node_group[obscured_nodes[i]].x < 0 || current_nodegroup.node_group[obscured_nodes[i]].y < 0) {
-            inner_node_modes.libre = true;
-            draw_libre_arc(cr, obscured_nodes[i],x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-        }
-        drawNode(cr, obscured_nodes[i], x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, inner_node_modes);
-        if (current_nodegroup.node_group[obscured_nodes[i]].next != -1) {
-            draw_arc(cr, obscured_nodes[i], current_nodegroup.node_group[obscured_nodes[i]].next, x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-        }
+        dynarray_destroy(obscured_nodes);
     }
-    dynarray_destroy(obscured_nodes);
 }
 void drawGrid(cairo_t *cr) {
     int i = 0;
