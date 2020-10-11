@@ -589,7 +589,7 @@
     <property name="deletable">False</property>
     <property name="transient_for">window</property>
     <property name="program_name">New Era Text Editor</property>
-    <property name="version">1.15</property>
+    <property name="version">1.16</property>
     <property name="copyright" translatable="yes">(c) 2020 Tinashe Gwena</property>
     <property name="logo">res/nete_logo.png</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
@@ -981,6 +981,21 @@ Really quit ? </property>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="chkbtn_codebox_ignore">
+                <property name="label" translatable="yes">Ignore</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">4</property>
               </packing>
             </child>
           </object>
