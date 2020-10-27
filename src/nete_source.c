@@ -108,12 +108,9 @@ typedef enum {
     NONE
 } snapping_modes;
 typedef struct {
-
     float r;
     float g;
     float b;
-
-
 } RGB;
 typedef struct {
     a_nodezone array[20];
@@ -125,11 +122,9 @@ typedef struct {
     float scaleFactor;
 } a_container_pos;
 typedef struct {
-
     GtkWidget *w_dlg_file_choose;       // Pointer to file chooser dialog box
     GtkWidget *w_dlg_file_save;       // Pointer to file save dialog box
     GtkWidget *drawingArea;
-
 //----------------------------------
     GtkWidget 	*w_dlg_codebox;   	// the codebox editor window
     GtkEntry 	*e_txt_codebox_name;
@@ -143,7 +138,6 @@ typedef struct {
     GtkNotebook	*t_ntb_nete_tabs;
     GtkWidget	*w_darea_scroll;
     GtkLabel 	*l_lbl_codebox_focus;
-//GtkWidget *
 
 //------------------------------------
 //  options window
@@ -164,9 +158,6 @@ typedef struct {
     GtkWidget *w_dlg_about;
 
     language_widgets language_buttons;
-
-
-
 } app_widgets;
 typedef struct {
     int original;
@@ -175,7 +166,6 @@ typedef struct {
 struct {
     int node;
     int source_codeBox;
-
 } node_to_copy;
 typedef enum {
     MOVE,
@@ -192,6 +182,15 @@ typedef struct {
     bool to_ignore;
 
 } node_mode_flags;
+typedef enum {
+    CLOSE,
+    QUIT
+} closing_modes;
+typedef struct {
+    int node;
+    double scroll_x;
+    double scroll_y;
+} focus_item;
 typedef struct {
     a_node *node_group;
     int current_codeBox;
@@ -204,6 +203,9 @@ typedef struct {
     char *fileName;
     bool node_group_altered;
     bool fileSaveAsMode;
+    focus_item *focusList;
+    double scroll_x;
+    double scroll_y;
 } a_node_group_context;
 RGB colorConverter(int hexValue);
 void redraw(cairo_t *cr) ;
@@ -211,6 +213,7 @@ void draw_arc(cairo_t *cr, int node1, int node2, int frame_x, int frame_y, float
 void drawGrid(cairo_t *cr);
 void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, int frame_width, int frame_height, float scale_factor, node_mode_flags node_modes);
 int node_group_push(int x, int y, int width, int height, int next, int previous, int cont_head, int cont_by, int priority, int* contained, char *name, char *description, char *head, char *tail, char *real_code, int node_id, char status);
+int node_group_push_id(int x, int y, int width, int height, int next, int previous, int cont_head, int cont_by, int priority, int* contained, char *name, char *description, char *head, char *tail, char *real_code, int node_id, char status);
 int node_zones_push(int x, int y, int width, int height);
 void init_arrays();
 void containerRemoveNode(int containing_node, int  inner_node);
@@ -238,7 +241,6 @@ void string_set(char** destination, char* value);
 void string_add(char** destination, char* value);
 void clearRenderedData(void);
 void renderDataNodes(int* nodes, bool allow_previous);
-void clearRenderedLineData(void);
 void renderLineDataNodes(int* nodes, bool allow_previous);
 void init_node_group_context(a_node_group_context *temp_group_list);
 int pasteNode(int parent, int node, int source_codeBox);
@@ -261,6 +263,10 @@ void splice_out_node(int *array, int inner_node);
 void draw_libre_arc(cairo_t *cr, int node, int frame_x, int frame_y, float scale_factor);
 void mark_unsaved(app_widgets *app_wdgts);
 bool check_unsaved(void);
+void remove_nodegroup(app_widgets *app_wdgts);
+void set_node_group(int new_group_index, app_widgets *app_wdgts);
+void delete_group_context(a_node_group_context *temp_group_list);
+void emptyout_node(a_node *node);
 
 GtkWidget *pmenu;
 cairo_pattern_t *pattern;
@@ -314,6 +320,7 @@ char default_destination[] = "nete_out.txt";
 
 GTimer *last_refresh_time;
 toolingmodes toolmode = MOVE;
+closing_modes close_warn_mode = CLOSE;
 int node_head_width = 100;
 int node_head_height = 20;
 int node_descript_height = 0;
@@ -340,32 +347,11 @@ gboolean on_drawingarea_draw( __attribute__((unused)) GtkWidget *widget, cairo_t
 }
 gint on_ntb_nete_tabs_switch_page(__attribute__((unused)) GtkButton *widget, __attribute__((unused)) GtkWidget *page, guint page_num, app_widgets *app_wdgts, __attribute__((unused)) gpointer data)
 {
-    int old_nodegroup_id;
-    unsigned int new_page_num = page_num;
 
-      old_nodegroup_id = current_codeBox;
-    current_codeBox = new_page_num;
-
-    if(current_nodegroup.topNode != -1) {
-        gtk_label_set_text (app_wdgts->l_lbl_codebox_focus, current_nodegroup.node_group[current_nodegroup.topNode].name);
-        gtk_widget_show(app_wdgts->l_lbl_codebox_focus);
-    } else {
-        gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
-    }
-
-    no_node_selected = true;
-    g_object_ref(app_wdgts->l_lbl_codebox_focus);
-    g_object_ref(app_wdgts->w_darea_scroll);
-    gtk_container_remove (codeBox_list[old_nodegroup_id].codebox_container, app_wdgts->w_darea_scroll);
-    gtk_container_remove (codeBox_list[old_nodegroup_id].codebox_container, app_wdgts->l_lbl_codebox_focus);
-    gtk_container_add (current_nodegroup.codebox_container, app_wdgts->l_lbl_codebox_focus);
-    gtk_container_add (current_nodegroup.codebox_container, app_wdgts->w_darea_scroll);
-
-    gtk_widget_queue_draw(app_wdgts->drawingArea);
+    set_node_group(page_num, app_wdgts);
 
     return TRUE;
 }
-
 gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event, app_widgets *app_wdgts, gpointer data) {
     const guint RIGHT_CLICK = 3;
 
@@ -378,11 +364,11 @@ gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event,
             rightClickCoord.y = (guint)event->y;
             gtk_menu_popup_at_pointer(GTK_MENU(pmenu), event);
         } else {
+
             mouse_down = true;
 
             doMouseDown2((guint)event->x, (guint)event->y, data);
         }
-
         return TRUE;
     }
 
@@ -424,7 +410,6 @@ gint on_drawingarea_motion_notify_event(GtkWidget *widget, GdkEventButton *event
 
         g_timer_elapsed (last_refresh_time, &refresh_msec);
         // we are going to limit refreshes while dragging to 10 times a second
-        //printf("refresh time %dms   \n", refresh_msec);
 
         if(refresh_msec > 20000) {
             gtk_widget_queue_draw( widget);
@@ -451,6 +436,7 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     if(node_being_edited != -1 && node_group_being_edited != -1) {
         gtk_text_buffer_get_start_iter (app_wdgts->e_txt_codebox_code, &start);
         gtk_text_buffer_get_end_iter (app_wdgts->e_txt_codebox_code, &end);
+
 
         name = gtk_entry_get_text (app_wdgts->e_txt_codebox_name);
         description = gtk_entry_get_text (app_wdgts->e_txt_codebox_description);
@@ -488,7 +474,6 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
         node_being_edited = -1;
         node_group_being_edited = -1;
     }
-
     gtk_window_get_position(GTK_WINDOW(app_wdgts->w_dlg_codebox), &codeboxWindowPos.x, &codeboxWindowPos.y);
     first_time_codebox = false;
 
@@ -568,6 +553,7 @@ int nete_copy_node(__attribute__((unused)) GtkWidget *widget, __attribute__((unu
 
     if (tempNodeZone.node != -1) {
     }
+
     if (tempNodeZone.zone == head_zone) {
         copyNode = true;
 
@@ -612,8 +598,10 @@ int nete_paste_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea
 }
 int nete_focus_node(__attribute__((unused)) GtkWidget *widget, app_widgets *app_wdgts) {
     mousePressed = false;
-
+    focus_item temp_focus_item;
     int* primary_nodes;
+    GtkAdjustment *scrollx;
+    GtkAdjustment *scrolly;
 
     primary_nodes = getPrimaryNodes();
 
@@ -622,9 +610,15 @@ int nete_focus_node(__attribute__((unused)) GtkWidget *widget, app_widgets *app_
     dynarray_destroy(primary_nodes);
 
     if (tempNodeZone.node != -1) {
-        
         if (tempNodeZone.zone == head_zone) {
-
+            scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
+            scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
+            temp_focus_item.scroll_x = gtk_adjustment_get_value (scrollx);
+            temp_focus_item.scroll_y = gtk_adjustment_get_value (scrolly);
+            gtk_adjustment_set_value (scrollx, 0.0);
+            gtk_adjustment_set_value (scrolly, 0.0);
+            temp_focus_item.node = current_nodegroup.topNode;
+            dynarray_push(current_nodegroup.focusList, temp_focus_item);
             current_nodegroup.topNode = tempNodeZone.node;
             gtk_label_set_text (app_wdgts->l_lbl_codebox_focus, current_nodegroup.node_group[tempNodeZone.node].name);
             gtk_widget_show(app_wdgts->l_lbl_codebox_focus);
@@ -635,17 +629,30 @@ int nete_focus_node(__attribute__((unused)) GtkWidget *widget, app_widgets *app_
     return 0;
 }
 int nete_restore_all(__attribute__((unused)) GtkWidget *widget, app_widgets *app_wdgts) {
-    current_nodegroup.topNode = -1;
-
-    gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
-
+    int temp_topNode;
+    focus_item temp_focus_item;
+    GtkAdjustment *scrollx;
+    GtkAdjustment *scrolly;
+    if(dynarray_length(current_nodegroup.focusList) > 0) {
+        scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
+        scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
+        dynarray_pop(current_nodegroup.focusList, &temp_focus_item);
+        current_nodegroup.topNode = temp_focus_item.node;
+        gtk_adjustment_set_value (scrollx, temp_focus_item.scroll_x);
+        gtk_adjustment_set_value (scrolly, temp_focus_item.scroll_y);
+    }
+    if(current_nodegroup.topNode == -1) {
+        gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
+    } else {
+        gtk_label_set_text (app_wdgts->l_lbl_codebox_focus, current_nodegroup.node_group[current_nodegroup.topNode].name);
+    }
     gtk_widget_queue_draw(app_wdgts->drawingArea);
 
     return 0;
 }
 void on_btn_rdo_move_toggled(GtkToggleButton *togglebutton, __attribute__((unused)) gpointer user_data) {
     if (gtk_toggle_button_get_active(togglebutton)) {
-         toolmode = MOVE;
+        toolmode = MOVE;
     }
 }
 void on_btn_rdo_exenter_toggled (GtkToggleButton *togglebutton, __attribute__((unused)) gpointer user_data) {
@@ -655,7 +662,7 @@ void on_btn_rdo_exenter_toggled (GtkToggleButton *togglebutton, __attribute__((u
 }
 void on_btn_rdo_link_toggled (GtkToggleButton *togglebutton, __attribute__((unused)) gpointer user_data) {
     if (gtk_toggle_button_get_active(togglebutton)) {
-         toolmode = JOIN;
+        toolmode = JOIN;
     }
 }
 gboolean on_msg_file_save_warn_delete_event (GtkWidget *widget, GdkEvent  *event, gpointer   user_data) {
@@ -665,6 +672,7 @@ gboolean on_msg_file_save_warn_delete_event (GtkWidget *widget, GdkEvent  *event
 }
 void on_window_delete_event(GtkWidget *object, app_widgets *app_wdgts, gpointer user_data) {
     if(check_unsaved()) {
+        close_warn_mode = QUIT;
         gtk_widget_show(user_data);
     } else {
         gtk_main_quit();
@@ -673,22 +681,29 @@ void on_window_delete_event(GtkWidget *object, app_widgets *app_wdgts, gpointer 
 void on_msg_file_save_warn_close (GtkDialog *dialog, gpointer   user_data) {
 
 }
-void on_msg_file_save_warn_response (GtkDialog *dialog, gint       response_id, gpointer   user_data) {
+void on_msg_file_save_warn_response (GtkDialog *dialog, gint       response_id, app_widgets *app_wdgts) {
     if(response_id == -9) {
         gtk_widget_hide(dialog);
     } else if(response_id == -8) {
-        gtk_main_quit();
+        switch(close_warn_mode) {
+        case CLOSE:
+            remove_nodegroup(app_wdgts);
+            gtk_widget_hide(dialog);
+            break;
+        case QUIT:
+            gtk_main_quit();
+            break;
+        }
     }
 }
 gint on_btn_line_submit_clicked(__attribute__((unused)) GtkButton *widget,
                                 app_widgets *app_wdgts)
 {
-      line_search(app_wdgts);
+    line_search(app_wdgts);
 
     return TRUE;
 }
 void on_txt_search_line_activate (GtkEntry *entry, app_widgets *app_wdgts, gpointer  user_data) {
-    printf("find line enter\n");
     line_search(app_wdgts);
 
     return TRUE;
@@ -731,14 +746,11 @@ void on_mnu_item_open_activate(__attribute__((unused)) GtkMenuItem *menuitem, ap
                 current_nodegroup.fileSaveAsMode = false;
 
                 gtk_widget_queue_draw(app_wdgts->drawingArea);
-
             }
             g_free(file_contents);
         }
         g_free(file_name);
     }
-
-    // Finished with the "Open Text File" dialog box, so hide it
     gtk_widget_hide(app_wdgts->w_dlg_file_choose);
 }
 void on_mnu_item_save_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -790,19 +802,27 @@ void on_mnu_item_new_activate(__attribute__((unused)) GtkMenuItem *menuitem, app
 }
 void on_mnu_nete_quit_activate(__attribute__((unused)) GtkMenuItem *menuitem,  gpointer user_data) {
     if(check_unsaved()) {
+        close_warn_mode = QUIT;
         gtk_widget_show(user_data);
-         } else {
+    } else {
         gtk_main_quit();
     }
+}
+void on_mnu_item_close_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
+    if(current_nodegroup.node_group_altered) {
+        close_warn_mode = CLOSE;
+        gtk_widget_show(app_wdgts->w_msg_file_save_warn);
+    } else {
+        remove_nodegroup(app_wdgts);
+    }
+
 }
 void on_cmnu_wrap_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app_wdgts, gpointer user_data) {
     printf("text wrap mode changed \n");
 
     if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->b_mnu_wrap))) {
         gtk_text_view_set_wrap_mode (app_wdgts->s_source_view, GTK_WRAP_WORD_CHAR);
-
-    }
-    else {
+    } else {
         gtk_text_view_set_wrap_mode(app_wdgts->s_source_view, GTK_WRAP_NONE);
     }
 }
@@ -882,9 +902,7 @@ void on_mnu_about_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_wi
     gtk_widget_show(app_wdgts->w_dlg_about);
 }
 void on_dlg_about_response(GtkDialog *dialog, gint response_id, app_widgets *app_wdgts) {
-
     gtk_widget_hide(app_wdgts->w_dlg_about);
-
 }
 gboolean on_dlg_about_delete_event (GtkWidget *widget, GdkEvent  *event, gpointer   user_data) {
     gtk_widget_hide(widget);
@@ -899,6 +917,7 @@ void on_btn_codebox_tocodebox_clicked(__attribute__((unused)) GtkButton *widget,
 
     GtkTextIter start;
     GtkTextIter end;
+
 
     if(gtk_text_buffer_get_selection_bounds (app_wdgts->e_txt_codebox_code, &start, &end)) {
 
@@ -942,6 +961,7 @@ void on_btn_codebox_tocodebox_clicked(__attribute__((unused)) GtkButton *widget,
         deactivate_quit();
 
         node_displacement_count ++;
+
     }
 }
 void on_btn_codebox_tohead_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
@@ -1005,7 +1025,6 @@ void on_btn_codebox_totail_clicked(__attribute__((unused)) GtkButton *widget, ap
 
         string_free(&final_text);
         g_free(selected_text);
-
     }
 }
 int main(int argc, char **argv)  {
@@ -1176,7 +1195,6 @@ void redraw(cairo_t *cr) {
 
     for (i = 0; i < (dynarray_length(current_nodegroup.node_group) ); i++) {
         if(current_nodegroup.node_group[i].cont_by == current_nodegroup.topNode) {
-
             if(!current_nodegroup.node_group[i].obscured) {
                 node_modes.last_touched = false;
                 node_modes.last_read = false;
@@ -1281,7 +1299,6 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     static const double dashnone[] = {};
 
     node_mode_flags inner_node_modes;
-
     float head_width  = node_head_width * scale_factor;
     float head_height  = node_head_height * scale_factor;
     float descript_height = node_descript_height * scale_factor;
@@ -1338,14 +1355,14 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
 //===================================================
 
     if(children_scale_factor > 0.35) {
-//============  flanks =================================
+        //============  flanks =================================
         tempcolour = colorConverter(0x555555);
         cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
         cairo_rectangle(cr, x + 2, y + head_height +spacer + descript_height + spacer + 2, 13, body_height - 4);
         cairo_fill(cr);
         cairo_rectangle(cr, x + body_width - 15, y + head_height +spacer + descript_height + spacer + 2, 13, body_height - 4);
         cairo_fill(cr);
-//========================================================
+        //========================================================
     } else {
         cairo_set_source(cr, pattern);
         tempcolour = colorConverter(0x444444);
@@ -1380,7 +1397,6 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
         cairo_stroke(cr);
     }
 //=====================================================
-
 
     if(current_nodegroup.node_group[node].width > 75 && current_nodegroup.node_group[node].height > 35) {
         tempcolour = colorConverter(0xcccccc);
@@ -1529,6 +1545,7 @@ void drawGrid(cairo_t *cr) {
         cairo_stroke (cr);
         j++;
     }
+
 }
 void draw_text_in_box(cairo_t *cr, char *real_code, float x, float y, float width, float height) {
 // ----------------- text vars
@@ -1540,7 +1557,6 @@ void draw_text_in_box(cairo_t *cr, char *real_code, float x, float y, float widt
     char oneline[128];
     int one_line_length;
     int one_line_max_length = 126;
-
     cairo_save(cr);
     cairo_scaled_font_extents (cairo_get_scaled_font(cr), &my_font_extents);
 
@@ -1553,6 +1569,7 @@ void draw_text_in_box(cairo_t *cr, char *real_code, float x, float y, float widt
     p = strchr(last_str,'\n');
     while(p != NULL) {
         one_line_length = p-last_str;
+
         if(one_line_length > one_line_max_length)
             one_line_length = one_line_max_length;
 
@@ -1565,6 +1582,7 @@ void draw_text_in_box(cairo_t *cr, char *real_code, float x, float y, float widt
         real_code_y += my_font_extents.ascent;
     }
     one_line_length = strlen(last_str);
+
     if(one_line_length > one_line_max_length)
         one_line_length = one_line_max_length;
 
@@ -1610,7 +1628,6 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
     primary_nodes = getPrimaryNodes();
 
     if(no_node_selected) {
-
         getNodeAndZone(&tempNodeZone, primary_nodes, x, y, 0, 0, current_nodegroup.zoomScaleFactor, -1);
 
         if(tempNodeZone.node != -1) {
@@ -1631,7 +1648,6 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
             check_obscuring(tempNodeZone.node);
             check_obscured(tempNodeZone.node);
             no_node_selected = true;
-            
             break;
         case JOIN:
             getNodeAndZone(&newNodeZone, primary_nodes, x, y, 0, 0, current_nodegroup.zoomScaleFactor, tempNodeZone.node);
@@ -1639,20 +1655,16 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
                 join_nodes(&tempNodeZone, &newNodeZone);
                 no_node_selected = true;
             }
-
             break;
-
         }
     }
     dynarray_destroy(primary_nodes);
 }
 void doMouseDrag2(int x, int y, __attribute__((unused)) gpointer data) {
-
     int xDifference = 0;
     int yDifference = 0;
     if(toolmode == MOVE) {
         if (mousePressed && tempNodeZone.zone == 0) {
-
             xDifference = snapGrid((x / tempNodeZone.scale_factor))*tempNodeZone.scale_factor - tempNodeZone.x;
             yDifference = snapGrid((y / tempNodeZone.scale_factor))*tempNodeZone.scale_factor - tempNodeZone.y;
 
@@ -1668,7 +1680,6 @@ void doMouseDrag2(int x, int y, __attribute__((unused)) gpointer data) {
             current_nodegroup.node_group[tempNodeZone.node].height = snapGrid(tempNodeZone.node_height + yDifference/tempNodeZone.scale_factor);
             no_node_selected = true;
         }
-
     }
 }
 void doDoubleClick(int x, int y, __attribute__((unused)) gpointer data, app_widgets *app_wdgts) {
@@ -1684,13 +1695,11 @@ void doDoubleClick(int x, int y, __attribute__((unused)) gpointer data, app_widg
 
         launchBox(tempNodeZone.node, 0,  app_wdgts);
     }
-
 }
 void doMouseUp2(int x, int y, __attribute__((unused)) gpointer data) {
 
     int* primary_nodes;
     a_nodezoneinfo newNodeZone;
-
 
     if (tempNodeZone.zone == 0) {
 
@@ -1704,7 +1713,6 @@ void doMouseUp2(int x, int y, __attribute__((unused)) gpointer data) {
             check_obscured(tempNodeZone.node);
             check_obscuring(tempNodeZone.node);
         }
-
         if ((newNodeZone.node != current_nodegroup.topNode && (newNodeZone.zone == 1 || newNodeZone.zone == 2 || newNodeZone.zone == 3 ) && newNodeZone.node != tempNodeZone.node) || newNodeZone.node == current_nodegroup.topNode ) {
         }
     }
@@ -1713,7 +1721,6 @@ void doMouseUp2(int x, int y, __attribute__((unused)) gpointer data) {
             check_obscuring(tempNodeZone.node);
         }
     }
-
     if(toolmode == MOVE) {
         tempNodeZone.node = -1;
         tempNodeZone.zone = -1;
@@ -1770,7 +1777,6 @@ float calculateScale(int node, __attribute__((unused)) int y_displacement, float
             max_x = current_x;
         if(current_y > max_y)
             max_y = current_y;
-
     }
 
     if(max_x > node_max_x)
@@ -1804,7 +1810,6 @@ void  getNodeAndZone(a_nodezoneinfo *return_nodezone, int *nodes, int x, int y, 
         for(i = 0; i < dynarray_length(nodes); i++) {
             current_node = nodes[i];
             if((obsc_ind == 0 && current_nodegroup.node_group[current_node].obscured) || (obsc_ind == 1 && !current_nodegroup.node_group[current_node].obscured)) {
-
                 head_height  = node_head_height * scale_factor;
                 descript_height = node_descript_height * scale_factor;
                 spacer  = node_spacer_height *scale_factor;
@@ -1882,8 +1887,8 @@ bool check_not_descendent(int main_node, int desc_node) {
 
         if(!check_not_descendent(current_nodegroup.node_group[main_node].contained[i], desc_node))
             return false;
-
     }
+
     return true;
 }
 bool check_not_circular(int main_node, int susp_node) {
@@ -1909,6 +1914,7 @@ bool check_not_circular(int main_node, int susp_node) {
             return false;
 
         tempNode = current_nodegroup.node_group[tempNode].next;
+
     }
 
     return true;
@@ -1918,11 +1924,12 @@ float snapGrid(float invalue) {
 
     float gridvalue;
 
-     gridvalue = (grid_size / 2);
+    gridvalue = (grid_size / 2);
 
     return_value = round(invalue/gridvalue) * gridvalue;
 
     return return_value;
+
 }
 void get_absolutePosition(a_container_pos *container_pos, int node) {
     float node_x = current_nodegroup.node_group[node].x;
@@ -1993,7 +2000,6 @@ void renderDataNodes(int* nodes, bool allow_previous) {
 
     for(p = 0; p <= 9; p++) {
         for (j = 0; j < dynarray_length(nodes); j++) {
-
             node_priority = current_nodegroup.node_group[nodes[j]].priority;
             if(node_priority == -1)
                 node_priority = 5;
@@ -2001,7 +2007,7 @@ void renderDataNodes(int* nodes, bool allow_previous) {
             not_to_ignore = (current_nodegroup.node_group[nodes[j]].status == 0);
 
             if ((allow_previous || current_nodegroup.node_group[nodes[j]].previous == -1) && node_priority == p) {
-                  if(not_to_ignore) {
+                if(not_to_ignore) {
                     if(strlen(current_nodegroup.node_group[nodes[j]].head) > 0) {
                         string_add(&output_text, current_nodegroup.node_group[nodes[j]].head);
                         string_add(&output_text, "\r\n");
@@ -2023,21 +2029,11 @@ void renderDataNodes(int* nodes, bool allow_previous) {
                 if (current_nodegroup.node_group[nodes[j]].next != -1) {
                     next_node = dynarray_create(int);
                     dynarray_push(next_node, current_nodegroup.node_group[nodes[j]].next);
-                      renderDataNodes(next_node, true);
+                    renderDataNodes(next_node, true);
                     dynarray_destroy(next_node);
                 }
             }
         }
-    }
-}
-void clearRenderedLineData() {
-    int temp_id = 0;
-
-    while (dynarray_length(rendered_data) > 0) {
-        dynarray_pop(rendered_data, &temp_id);
-    }
-    while (dynarray_length(rendered_counts) > 0) {
-        dynarray_pop(rendered_counts, &temp_id);
     }
 }
 void renderLineDataNodes(int* nodes, bool allow_previous) {
@@ -2052,6 +2048,7 @@ void renderLineDataNodes(int* nodes, bool allow_previous) {
     for(p = 0; p <= 9; p++) {
         for (j = 0; j < dynarray_length(nodes); j++) {
             node_priority = current_nodegroup.node_group[nodes[j]].priority;
+
             if(node_priority == -1)
                 node_priority = 5;
 
@@ -2141,8 +2138,9 @@ int pasteNode(int parent, int node, int source_codeBox) {
         dynarray_push(current_nodegroup.node_group[parent].contained, newID);
     }
     for (i = 0; i < dynarray_length(codeBox_list[source_codeBox].node_group[node].contained); i++) {
-         pasteNode(newID, codeBox_list[source_codeBox].node_group[node].contained[i], source_codeBox);
+        pasteNode(newID, codeBox_list[source_codeBox].node_group[node].contained[i], source_codeBox);
     }
+
     return newID;
 }
 int get_key(int key) {
@@ -2195,6 +2193,7 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
     container_pos.y = 0;
     container_pos.scaleFactor = current_nodegroup.zoomScaleFactor;
     if (current_nodegroup.node_group[firstNodeZone->node].cont_by != secondNodeZone->node  && check_not_descendent(firstNodeZone->node, secondNodeZone->node) && check_not_circular(firstNodeZone->node, secondNodeZone->node)) {
+
         if(current_nodegroup.node_group[firstNodeZone->node].cont_by != -1) {
             containerRemoveNode(current_nodegroup.node_group[firstNodeZone->node].cont_by, firstNodeZone->node);
         }
@@ -2210,14 +2209,12 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
         if(secondNodeZone->node != current_nodegroup.topNode) {
             get_absolutePosition(&container_pos, secondNodeZone->node);
             better_scale = calculateScale(secondNodeZone->node, 0, container_pos.scaleFactor) * container_pos.scaleFactor;
-
         }
 
         if(secondNodeZone->node != -1) {
             dynarray_push(current_nodegroup.node_group[secondNodeZone->node].contained, firstNodeZone->node);
         }
         if(secondNodeZone->node != current_nodegroup.topNode) {
-
 
         }
 //we set the coordinates of the newly added node in proportion to the size of node they're going into
@@ -2251,14 +2248,12 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
                 current_nodegroup.node_group[secondNodeZone->node].cont_head = old_tempNode;
             }
         }
-
         tempNode = current_nodegroup.node_group[firstNodeZone->node].next;
 
         while (tempNode != -1) {
             if(current_nodegroup.node_group[tempNode].cont_by != -1) {
                 containerRemoveNode(current_nodegroup.node_group[tempNode].cont_by, tempNode);
             }
-
             if(secondNodeZone->node != -1) {
                 dynarray_push(current_nodegroup.node_group[secondNodeZone->node].contained, tempNode);
             }
@@ -2282,7 +2277,6 @@ bool join_nodes(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZone) {
     if (firstNodeZone->zone == 1 || firstNodeZone->zone == 2 || firstNodeZone->zone == 3) {
         if (firstNodeZone->node != current_nodegroup.topNode && (secondNodeZone->zone == 1 || secondNodeZone->zone == 2 || secondNodeZone->zone == 3) && secondNodeZone->node != firstNodeZone->node) {
             if(current_nodegroup.node_group[firstNodeZone->node].cont_by == current_nodegroup.node_group[secondNodeZone->node].cont_by ) {
-
                 if(current_nodegroup.node_group[firstNodeZone->node].next == -1 && current_nodegroup.node_group[secondNodeZone->node].previous == -1) {
                     current_nodegroup.node_group[firstNodeZone->node].next = secondNodeZone->node;
                     current_nodegroup.node_group[secondNodeZone->node].previous = firstNodeZone->node;
@@ -2344,6 +2338,7 @@ void clear_obscured_by(int node) {
 
         splice_out_node(current_nodegroup.node_group[obscuring_node].obscuring, node);
     }
+
     while(dynarray_length(current_nodegroup.node_group[node].obscured_by) > 0) {
         dynarray_pop(current_nodegroup.node_group[node].obscured_by, &temp_node);
     }
@@ -2521,7 +2516,6 @@ void node_group_update_id(int node_id, int group_id, char *name, char *descripti
     string_set(&codeBox_list[group_id].node_group[node_id].tail, tail);
     string_set(&codeBox_list[group_id].node_group[node_id].real_code, real_code);
     codeBox_list[group_id].node_group[node_id].status = status;
-
 }
 void init_nodes() {
     int* temp_contained_array;
@@ -2584,36 +2578,17 @@ void init_nodes() {
     dynarray_destroy(temp_contained_array);
 }
 void containerRemoveNode(int containing_node, int  inner_node) {
-    unsigned int i = 0;
-    unsigned int j = 0;
+    splice_out_node(current_nodegroup.node_group[containing_node].contained, inner_node);
 
-    int temp_node;
-
-    unsigned int array_length = dynarray_length(current_nodegroup.node_group[containing_node].contained);
-    while(i < array_length) {
-        if(current_nodegroup.node_group[containing_node].contained[i] == inner_node) {
-            // we splice the node
-            j = i;
-            while(j < array_length) {
-                current_nodegroup.node_group[containing_node].contained[j] = current_nodegroup.node_group[containing_node].contained[j + 1];
-                j++;
-            }
-             if(array_length > 0) {
-                  dynarray_pop(current_nodegroup.node_group[containing_node].contained, &temp_node);
-               }
-             }
-        i++;
-    }
     current_nodegroup.node_group[inner_node].cont_by = current_nodegroup.topNode;
 
     deactivate_quit();
 }
 void string_init(char** string_ptr) {
-    // Create a string pointer and allocate memory for it
+// Create a string pointer and allocate memory for it
     char *ptr = malloc(16);
-    // Dereference our pointer and set its address to the new contiguous block of memory
+// Dereference our pointer and set its address to the new contiguous block of memory
     *string_ptr = ptr;
-
 }
 void string_free(char** string_ptr) {
     free(*string_ptr);
@@ -2621,7 +2596,7 @@ void string_free(char** string_ptr) {
 void string_set(char** destination, char* value) {
     int new_size = strlen(value);
 
-    // Add 1 to account for '\0' null terminator
+// Add 1 to account for '\0' null terminator
     *destination = realloc(*destination, sizeof(char)*new_size + 1);
 
     if(*destination == NULL) {
@@ -2633,7 +2608,7 @@ void string_set(char** destination, char* value) {
 void string_add(char** destination, char* value) {
     int new_size = strlen(*destination) + strlen(value);
 
-    // Add 1 to account for '\0' null terminator
+// Add 1 to account for '\0' null terminator
     *destination = realloc(*destination, sizeof(char)*new_size + 1);
 
     if(*destination == NULL) {
@@ -2673,9 +2648,39 @@ void init_node_group_context(a_node_group_context *temp_group_list) {
     string_set(&(temp_group_list->fileName), "");
 
     temp_group_list->node_group = dynarray_create(a_node);
+
+    temp_group_list->focusList = dynarray_create(focus_item);
+}
+void delete_group_context(a_node_group_context *temp_group_list) {
+    int i;
+
+    string_free(&(temp_group_list->name));
+    string_free(&(temp_group_list->destination));
+    string_free(&(temp_group_list->fileName));
+
+    for(i = 0; i < dynarray_length(temp_group_list->node_group); i++) {
+        emptyout_node(&(temp_group_list->node_group[i]));
+    }
+
+    dynarray_destroy(temp_group_list->node_group);
+    dynarray_destroy(temp_group_list->focusList);
+}
+void emptyout_node(a_node *node) {
+
+    dynarray_destroy(node->contained);
+
+    string_free(&(node->name));
+    string_free(&(node->description));
+
+    string_free(&(node->head));
+    string_free(&(node->tail));
+
+    string_free(&node->real_code);
+
+    dynarray_destroy(node->obscuring);
+    dynarray_destroy(node->obscured_by);
 }
 void load_codeBox(char *nete_string) {
-
     cJSON *incoming_node_group = NULL;
     cJSON *code_node = NULL;
     cJSON *contained_member;
@@ -2737,6 +2742,7 @@ void load_codeBox(char *nete_string) {
         cJSON_ArrayForEach(contained_member, contained_array) {
             dynarray_push(temp_contained, contained_member->valueint);
         }
+
         name = cJSON_GetObjectItem(code_node, "name");
         description = cJSON_GetObjectItem(code_node, "description");
         head = cJSON_GetObjectItem(code_node, "head");
@@ -2779,7 +2785,8 @@ void load_codeBox(char *nete_string) {
     for(i = 0; i < dynarray_length(current_nodegroup.node_group); i++) {
         check_obscured(i);
     }
-cJSON_Delete(nete_json);
+
+    cJSON_Delete(nete_json);
 }
 char* stringify_nodes(void) {
     char *string = NULL;
@@ -2910,7 +2917,7 @@ void write_to_file(app_widgets *app_wdgts) {
                 string_add(&output_filename, ".nete");
             }
 
-// ====== set up the tab's name =========================
+            // ====== set up the tab's name =========================
             last_slash = strrchr(file_name, '/');
             string_init(&tab_name);
             string_set(&tab_name, last_slash + 1);
@@ -2918,7 +2925,7 @@ void write_to_file(app_widgets *app_wdgts) {
             gtk_notebook_set_tab_label_text (app_wdgts->t_ntb_nete_tabs,
                                              gtk_notebook_get_nth_page (app_wdgts->t_ntb_nete_tabs, current_codeBox), tab_name);
 
-// ======== then the name and filename
+            // ======== then the name and filename
             string_set(&(current_nodegroup.name), tab_name);
             string_set(&(current_nodegroup.fileName), output_filename);
             write_to_file = true;
@@ -2930,8 +2937,7 @@ void write_to_file(app_widgets *app_wdgts) {
         gtk_widget_hide(app_wdgts->w_dlg_file_save);
     }
 
-    // =========== then write the actual file ===========
-
+// =========== then write the actual file ===========
     if(write_to_file) {
         fp = fopen(output_filename, "w");
 
@@ -2961,6 +2967,8 @@ void write_feedback(app_widgets *app_wdgts, char *text) {
 void create_new_tab(app_widgets *app_wdgts) {
     GtkWidget	*tab_label;
     GtkWidget	*a_box1;
+    GtkAdjustment *scrollx;
+    GtkAdjustment *scrolly;
 
     int old_nodegroup_id;
 
@@ -2979,6 +2987,13 @@ void create_new_tab(app_widgets *app_wdgts) {
     dynarray_push(codeBox_list, temp_group_list);
     current_codeBox = dynarray_length(codeBox_list) - 1;
 
+    scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
+    scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
+    codeBox_list[old_nodegroup_id].scroll_x = gtk_adjustment_get_value (scrollx);
+    codeBox_list[old_nodegroup_id].scroll_y = gtk_adjustment_get_value (scrolly);
+    gtk_adjustment_set_value (scrollx, 0.0);
+    gtk_adjustment_set_value (scrolly, 0.0);
+
     current_nodegroup.codebox_container = a_box1;
 
     g_object_ref(app_wdgts->l_lbl_codebox_focus);
@@ -2995,14 +3010,11 @@ int count_string_lines(char *string) {
     int num_newlines = 0;
 
     if(strlen(string) > 0) {
-
         num_newlines ++;
         p = string;
         p = strchr(p,'\n');
-
         while(p != NULL) {
             p = strchr(p + 1,'\n');
-
             num_newlines ++;
         }
     }
@@ -3079,7 +3091,7 @@ void splice_out_node(int *array, int inner_node) {
 
     while(i < array_length) {
         if(array[i] == inner_node) {
-              j = i;
+            j = i;
             while(j < array_length) {
                 array[j] = array[j + 1];
                 j++;
@@ -3090,7 +3102,6 @@ void splice_out_node(int *array, int inner_node) {
         }
         i++;
     }
-
 }
 bool check_unsaved(void) {
     unsigned int i;
@@ -3111,11 +3122,76 @@ void mark_unsaved(app_widgets *app_wdgts) {
 
     if(current_nodegroup.node_group_altered) {
         string_add(&tab_name, "*");
-
     }
 
     gtk_notebook_set_tab_label_text (app_wdgts->t_ntb_nete_tabs,
                                      gtk_notebook_get_nth_page (app_wdgts->t_ntb_nete_tabs, current_codeBox), tab_name);
     string_free(&tab_name);
+}
+void remove_nodegroup(app_widgets *app_wdgts) {
+    unsigned int i = 0;
+    a_node_group_context temp_item;
+    unsigned int array_length = dynarray_length(codeBox_list);
+
+    int final_codebox_index = current_codeBox;
+    int present_final_index = current_codeBox + 1;
+    int index_to_splice =  current_codeBox;
+    if(dynarray_length(codeBox_list) > 1) {
+        if(current_codeBox == (dynarray_length(codeBox_list) - 1)) {
+            final_codebox_index = current_codeBox - 1;
+            present_final_index = current_codeBox - 1;
+        }
+
+        set_node_group(present_final_index, app_wdgts);
+        delete_group_context(&(codeBox_list[index_to_splice]));
+
+        // now we splice out the codebox
+        i = index_to_splice;
+
+        while(i < array_length) {
+            codeBox_list[i] = codeBox_list[i + 1];
+            i++;
+        }
+        //codeBox_list[array_length - 1] = temp_item2;
+        if(array_length > 0) {
+            dynarray_pop(codeBox_list, &temp_item);
+        }
+
+// ------------------------------------------------------------
+        current_codeBox = final_codebox_index;
+
+        gtk_notebook_remove_page (app_wdgts->t_ntb_nete_tabs, index_to_splice);
+    }
+
+}
+void set_node_group(int new_group_index, app_widgets *app_wdgts) {
+    int old_nodegroup_id;
+    unsigned int new_page_num = new_group_index;
+    GtkAdjustment *scrollx;
+    GtkAdjustment *scrolly;
+
+    old_nodegroup_id = current_codeBox;
+    current_codeBox = new_page_num;
+
+    if(current_nodegroup.topNode != -1) {
+        gtk_label_set_text (app_wdgts->l_lbl_codebox_focus, current_nodegroup.node_group[current_nodegroup.topNode].name);
+        gtk_widget_show(app_wdgts->l_lbl_codebox_focus);
+    } else {
+        gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
+    }
+    scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
+    scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
+    codeBox_list[old_nodegroup_id].scroll_x = gtk_adjustment_get_value (scrollx);
+    codeBox_list[old_nodegroup_id].scroll_y = gtk_adjustment_get_value (scrolly);
+    gtk_adjustment_set_value (scrollx, current_nodegroup.scroll_x);
+    gtk_adjustment_set_value (scrolly, current_nodegroup.scroll_y);
+
+    no_node_selected = true;
+    g_object_ref(app_wdgts->l_lbl_codebox_focus);
+    g_object_ref(app_wdgts->w_darea_scroll);
+    gtk_container_remove (codeBox_list[old_nodegroup_id].codebox_container, app_wdgts->w_darea_scroll);
+    gtk_container_remove (codeBox_list[old_nodegroup_id].codebox_container, app_wdgts->l_lbl_codebox_focus);
+    gtk_container_add (current_nodegroup.codebox_container, app_wdgts->l_lbl_codebox_focus);
+    gtk_container_add (current_nodegroup.codebox_container, app_wdgts->w_darea_scroll);
 }
 
