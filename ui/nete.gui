@@ -13,11 +13,6 @@
       <pattern>*.nete2</pattern>
     </patterns>
   </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-  </object>
-  <object class="GtkTextBuffer" id="textbuffer_codebox"/>
   <object class="GtkWindow" id="window">
     <property name="width_request">800</property>
     <property name="height_request">500</property>
@@ -96,6 +91,16 @@
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="on_mnu_item_saveas_activate" swapped="no"/>
                         <accelerator key="s" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="mnu_item_close">
+                        <property name="label">gtk-close</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <signal name="activate" handler="on_mnu_item_close_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -589,7 +594,7 @@
     <property name="deletable">False</property>
     <property name="transient_for">window</property>
     <property name="program_name">New Era Text Editor</property>
-    <property name="version">1.16</property>
+    <property name="version">1.17</property>
     <property name="copyright" translatable="yes">(c) 2020 Tinashe Gwena</property>
     <property name="logo">res/nete_logo.png</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
@@ -752,8 +757,8 @@
     <property name="transient_for">window</property>
     <property name="message_type">warning</property>
     <property name="buttons">yes-no</property>
-    <property name="text" translatable="yes">There are unsaved files.
-Really quit ? </property>
+    <property name="text" translatable="yes">There are unsaved changes.
+Confirm continue ? </property>
     <signal name="close" handler="on_msg_file_save_warn_close" swapped="no"/>
     <signal name="delete-event" handler="on_msg_file_save_warn_delete_event" swapped="no"/>
     <signal name="response" handler="on_msg_file_save_warn_response" swapped="no"/>
