@@ -125,6 +125,7 @@ typedef struct {
     GtkWidget *w_dlg_file_choose;       // Pointer to file chooser dialog box
     GtkWidget *w_dlg_file_save;       // Pointer to file save dialog box
     GtkWidget *drawingArea;
+
 //----------------------------------
     GtkWidget 	*w_dlg_codebox;   	// the codebox editor window
     GtkEntry 	*e_txt_codebox_name;
@@ -140,7 +141,6 @@ typedef struct {
     GtkLabel 	*l_lbl_codebox_focus;
 
 //------------------------------------
-//  options window
     GtkWidget 	*w_dlg_options;
     GtkEntry 	*e_txt_options_destinations;
 
@@ -235,6 +235,7 @@ void node_group_update_id(int node_id, int group_id, char *name, char *descripti
 char* stringify_nodes(void);
 void draw_text_in_box(cairo_t *cr, char *real_code, float x, float y, float width, float height);
 void drawX(cairo_t *cr, int x, int y, int width, int height);
+void draw_nodes(cairo_t *cr, int *nodes, int x, int y, int width, int height, float scale_factor);
 void string_init(char** string_ptr);
 void string_free(char** string_ptr);
 void string_set(char** destination, char* value);
@@ -369,6 +370,7 @@ gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event,
 
             doMouseDown2((guint)event->x, (guint)event->y, data);
         }
+
         return TRUE;
     }
 
@@ -410,6 +412,7 @@ gint on_drawingarea_motion_notify_event(GtkWidget *widget, GdkEventButton *event
 
         g_timer_elapsed (last_refresh_time, &refresh_msec);
         // we are going to limit refreshes while dragging to 10 times a second
+        //printf("refresh time %dms   \n", refresh_msec);
 
         if(refresh_msec > 20000) {
             gtk_widget_queue_draw( widget);
@@ -436,7 +439,6 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     if(node_being_edited != -1 && node_group_being_edited != -1) {
         gtk_text_buffer_get_start_iter (app_wdgts->e_txt_codebox_code, &start);
         gtk_text_buffer_get_end_iter (app_wdgts->e_txt_codebox_code, &end);
-
 
         name = gtk_entry_get_text (app_wdgts->e_txt_codebox_name);
         description = gtk_entry_get_text (app_wdgts->e_txt_codebox_description);
@@ -474,6 +476,7 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
         node_being_edited = -1;
         node_group_being_edited = -1;
     }
+
     gtk_window_get_position(GTK_WINDOW(app_wdgts->w_dlg_codebox), &codeboxWindowPos.x, &codeboxWindowPos.y);
     first_time_codebox = false;
 
@@ -679,7 +682,6 @@ void on_window_delete_event(GtkWidget *object, app_widgets *app_wdgts, gpointer 
     }
 }
 void on_msg_file_save_warn_close (GtkDialog *dialog, gpointer   user_data) {
-
 }
 void on_msg_file_save_warn_response (GtkDialog *dialog, gint       response_id, app_widgets *app_wdgts) {
     if(response_id == -9) {
@@ -751,6 +753,7 @@ void on_mnu_item_open_activate(__attribute__((unused)) GtkMenuItem *menuitem, ap
         }
         g_free(file_name);
     }
+
     gtk_widget_hide(app_wdgts->w_dlg_file_choose);
 }
 void on_mnu_item_save_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -815,7 +818,6 @@ void on_mnu_item_close_activate(__attribute__((unused)) GtkMenuItem *menuitem, a
     } else {
         remove_nodegroup(app_wdgts);
     }
-
 }
 void on_cmnu_wrap_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app_wdgts, gpointer user_data) {
     printf("text wrap mode changed \n");
@@ -961,7 +963,6 @@ void on_btn_codebox_tocodebox_clicked(__attribute__((unused)) GtkButton *widget,
         deactivate_quit();
 
         node_displacement_count ++;
-
     }
 }
 void on_btn_codebox_tohead_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
@@ -1182,10 +1183,7 @@ void redraw(cairo_t *cr) {
     unsigned int i;
     tempcolour = colorConverter(0x222222);
 
-    int *obscured_nodes;
-    obscured_nodes = dynarray_create(int);
-
-    node_mode_flags node_modes;
+    int* primary_nodes;
 
     cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
     cairo_rectangle(cr, 0, 0, screenWidth, screenHeight);
@@ -1193,80 +1191,11 @@ void redraw(cairo_t *cr) {
 
     drawGrid(cr);
 
-    for (i = 0; i < (dynarray_length(current_nodegroup.node_group) ); i++) {
-        if(current_nodegroup.node_group[i].cont_by == current_nodegroup.topNode) {
-            if(!current_nodegroup.node_group[i].obscured) {
-                node_modes.last_touched = false;
-                node_modes.last_read = false;
-                node_modes.libre = false;
-                node_modes.obscured = false;
-                node_modes.being_dragged = false;
-                node_modes.being_resized = false;
-                node_modes.to_ignore = false;
+    primary_nodes = getPrimaryNodes();
 
-                if(i == current_nodegroup.last_node_read) {
-                    node_modes.last_read = true;
-                }
-                if(i == node_being_dragged) {
-                    node_modes.being_dragged = true;
-                }
-                if(i == node_being_resized) {
-                    node_modes.being_resized = true;
-                }
+    draw_nodes(cr, primary_nodes, 0, 0, 4095, 2047, current_nodegroup.zoomScaleFactor);
+    dynarray_destroy(primary_nodes);
 
-                if(!no_node_selected && i == tempNodeZone.node) {
-                    node_modes.last_touched = true;
-                }
-                if(current_nodegroup.node_group[i].status == 1) {
-                    node_modes.to_ignore = true;
-                }
-
-                drawNode(cr, i, 0, 0, 4095, 2047, current_nodegroup.zoomScaleFactor, node_modes);
-                if (current_nodegroup.node_group[i].next != -1) {
-                    draw_arc(cr, i, current_nodegroup.node_group[i].next, 0, 0, current_nodegroup.zoomScaleFactor);
-                }
-            } else {
-                dynarray_push(obscured_nodes, i);
-            }
-        }
-    }
-
-    for (i = 0; i < dynarray_length(obscured_nodes); i++) {
-        node_modes.last_touched = false;
-        node_modes.last_read = false;
-        node_modes.libre = false;
-        node_modes.obscured = true;
-        node_modes.being_dragged = false;
-        node_modes.being_resized = false;
-        node_modes.to_ignore = false;
-
-        if(obscured_nodes[i] == current_nodegroup.last_node_read) {
-            node_modes.last_read = true;
-        }
-        if(obscured_nodes[i] == node_being_dragged) {
-            node_modes.being_dragged = true;
-        }
-        if(obscured_nodes[i] == node_being_resized) {
-            node_modes.being_resized = true;
-        }
-        if(!no_node_selected && obscured_nodes[i] == tempNodeZone.node) {
-            node_modes.last_touched = true;
-        }
-
-        if(current_nodegroup.node_group[obscured_nodes[i]].x < 0 || current_nodegroup.node_group[obscured_nodes[i]].y < 0) {
-            node_modes.libre = true;
-        }
-        if(current_nodegroup.node_group[obscured_nodes[i]].status == 1) {
-            node_modes.to_ignore = true;
-        }
-        drawNode(cr, obscured_nodes[i], 0, 0, 4095, 2047, current_nodegroup.zoomScaleFactor, node_modes);
-
-        if (current_nodegroup.node_group[obscured_nodes[i]].next != -1) {
-            draw_arc(cr, obscured_nodes[i], current_nodegroup.node_group[obscured_nodes[i]].next, 0, 0, current_nodegroup.zoomScaleFactor);
-        }
-    }
-
-    dynarray_destroy(obscured_nodes);
 }
 void draw_arc(cairo_t *cr, int node1, int node2, int frame_x, int frame_y, float scale_factor) {
     RGB tempcolour;
@@ -1417,87 +1346,8 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     cairo_show_text (cr, name);
     unsigned long int i = 0;
 
-    int *obscured_nodes;
-
     if(children_scale_factor > 0.35) {
-        obscured_nodes = dynarray_create(int);
-
-        for (i = 0; i < dynarray_length(current_nodegroup.node_group[node].contained); i++) {
-            contained_node = current_nodegroup.node_group[node].contained[i];
-            if(!current_nodegroup.node_group[contained_node].obscured) {
-                inner_node_modes.last_touched = false;
-                inner_node_modes.last_read = false;
-                inner_node_modes.libre = false;
-                inner_node_modes.obscured = false;
-                inner_node_modes.being_dragged = false;
-                inner_node_modes.being_resized = false;
-                inner_node_modes.to_ignore = false;
-
-                if(contained_node == current_nodegroup.last_node_read) {
-                    inner_node_modes.last_read = true;
-                }
-                if(contained_node == node_being_dragged) {
-                    inner_node_modes.being_dragged = true;
-                }
-                if(contained_node == node_being_resized) {
-                    inner_node_modes.being_resized = true;
-                }
-                if(!no_node_selected && contained_node == tempNodeZone.node) {
-                    inner_node_modes.last_touched = true;
-                }
-
-                if(current_nodegroup.node_group[contained_node].x < 0 || current_nodegroup.node_group[contained_node].y < 0) {
-                    inner_node_modes.libre = true;
-                    draw_libre_arc(cr, contained_node,x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-                }
-                if(current_nodegroup.node_group[contained_node].status == 1) {
-                    inner_node_modes.to_ignore = true;
-                }
-
-                drawNode(cr, contained_node, x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, inner_node_modes);
-                if (current_nodegroup.node_group[contained_node].next != -1) {
-                    draw_arc(cr, contained_node, current_nodegroup.node_group[contained_node].next, x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-                }
-            } else {
-                dynarray_push(obscured_nodes, contained_node);
-            }
-        }
-
-        for (i = 0; i < dynarray_length(obscured_nodes); i++) {
-            inner_node_modes.last_touched = false;
-            inner_node_modes.last_read = false;
-            inner_node_modes.libre = false;
-            inner_node_modes.obscured = true;
-            inner_node_modes.being_dragged = false;
-            inner_node_modes.being_resized = false;
-            inner_node_modes.to_ignore = false;
-
-            if(obscured_nodes[i] == current_nodegroup.last_node_read) {
-                inner_node_modes.last_read = true;
-            }
-            if(obscured_nodes[i] == node_being_dragged) {
-                inner_node_modes.being_dragged = true;
-            }
-            if(obscured_nodes[i] == node_being_resized) {
-                inner_node_modes.being_resized = true;
-            }
-            if(!no_node_selected && obscured_nodes[i] == tempNodeZone.node) {
-                inner_node_modes.last_touched = true;
-            }
-            if(current_nodegroup.node_group[obscured_nodes[i]].x < 0 || current_nodegroup.node_group[obscured_nodes[i]].y < 0) {
-                inner_node_modes.libre = true;
-                draw_libre_arc(cr, obscured_nodes[i],x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-            }
-            if(current_nodegroup.node_group[obscured_nodes[i]].status == 1) {
-                inner_node_modes.to_ignore = true;
-            }
-
-            drawNode(cr, obscured_nodes[i], x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, inner_node_modes);
-            if (current_nodegroup.node_group[obscured_nodes[i]].next != -1) {
-                draw_arc(cr, obscured_nodes[i], current_nodegroup.node_group[obscured_nodes[i]].next, x, y+ head_height +spacer + descript_height + spacer, children_scale_factor);
-            }
-        }
-        dynarray_destroy(obscured_nodes);
+        draw_nodes(cr, current_nodegroup.node_group[node].contained, x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor);
     }
 
     if(node_modes.to_ignore) {
@@ -1619,6 +1469,56 @@ void drawX(cairo_t *cr, int x, int y, int width, int height) {
     cairo_stroke (cr);
     cairo_set_line_width (cr, 1);
 }
+void draw_nodes(cairo_t *cr, int *nodes, int x, int y, int width, int height, float scale_factor) {
+    int i;
+    int j;
+    node_mode_flags node_modes;
+
+    for(j = 0; j < 3; j++) {
+        for (i = 0; i < (dynarray_length(nodes) ); i++) {
+            if (j == 0 && current_nodegroup.node_group[nodes[i]].next != -1) {
+                draw_arc(cr, nodes[i], current_nodegroup.node_group[nodes[i]].next, x, y, scale_factor);
+            }
+            if((j == 1 && !current_nodegroup.node_group[nodes[i]].obscured) || (j == 2 && current_nodegroup.node_group[nodes[i]].obscured)) {
+                node_modes.last_touched = false;
+                node_modes.last_read = false;
+                node_modes.libre = false;
+                node_modes.obscured = false;
+                node_modes.being_dragged = false;
+                node_modes.being_resized = false;
+                node_modes.to_ignore = false;
+
+                if(j == 2) {
+                    node_modes.obscured = true;
+                }
+
+                if(nodes[i] == current_nodegroup.last_node_read) {
+                    node_modes.last_read = true;
+                }
+                if(nodes[i] == node_being_dragged) {
+                    node_modes.being_dragged = true;
+                }
+                if(nodes[i] == node_being_resized) {
+                    node_modes.being_resized = true;
+                }
+
+                if(current_nodegroup.node_group[nodes[i]].x < 0 || current_nodegroup.node_group[nodes[i]].y < 0) {
+                    node_modes.libre = true;
+                    draw_libre_arc(cr, nodes[i],x, y, scale_factor);
+                }
+
+                if(!no_node_selected && nodes[i] == tempNodeZone.node) {
+                    node_modes.last_touched = true;
+                }
+                if(current_nodegroup.node_group[nodes[i]].status == 1) {
+                    node_modes.to_ignore = true;
+                }
+
+                drawNode(cr, nodes[i], x, y, width, height, scale_factor, node_modes);
+            }
+        }
+    }
+}
 void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
     mousePressed = true;
 
@@ -1648,6 +1548,7 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
             check_obscuring(tempNodeZone.node);
             check_obscured(tempNodeZone.node);
             no_node_selected = true;
+
             break;
         case JOIN:
             getNodeAndZone(&newNodeZone, primary_nodes, x, y, 0, 0, current_nodegroup.zoomScaleFactor, tempNodeZone.node);
@@ -1655,6 +1556,7 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
                 join_nodes(&tempNodeZone, &newNodeZone);
                 no_node_selected = true;
             }
+
             break;
         }
     }
@@ -1713,6 +1615,7 @@ void doMouseUp2(int x, int y, __attribute__((unused)) gpointer data) {
             check_obscured(tempNodeZone.node);
             check_obscuring(tempNodeZone.node);
         }
+
         if ((newNodeZone.node != current_nodegroup.topNode && (newNodeZone.zone == 1 || newNodeZone.zone == 2 || newNodeZone.zone == 3 ) && newNodeZone.node != tempNodeZone.node) || newNodeZone.node == current_nodegroup.topNode ) {
         }
     }
@@ -1721,6 +1624,7 @@ void doMouseUp2(int x, int y, __attribute__((unused)) gpointer data) {
             check_obscuring(tempNodeZone.node);
         }
     }
+
     if(toolmode == MOVE) {
         tempNodeZone.node = -1;
         tempNodeZone.zone = -1;
@@ -1887,6 +1791,7 @@ bool check_not_descendent(int main_node, int desc_node) {
 
         if(!check_not_descendent(current_nodegroup.node_group[main_node].contained[i], desc_node))
             return false;
+
     }
 
     return true;
@@ -1949,7 +1854,6 @@ void get_absolutePosition(a_container_pos *container_pos, int node) {
         container_pos->y = (((node_y )*current_scale) + (node_head_height + node_spacer_height)*upper_position.scaleFactor + upper_position.y );
         container_pos->scaleFactor = current_scale;
     }
-
 }
 void launchBox(int node, int line_start, app_widgets *app_wdgts) {
     char num_buf[3];
@@ -2248,12 +2152,14 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
                 current_nodegroup.node_group[secondNodeZone->node].cont_head = old_tempNode;
             }
         }
+
         tempNode = current_nodegroup.node_group[firstNodeZone->node].next;
 
         while (tempNode != -1) {
             if(current_nodegroup.node_group[tempNode].cont_by != -1) {
                 containerRemoveNode(current_nodegroup.node_group[tempNode].cont_by, tempNode);
             }
+
             if(secondNodeZone->node != -1) {
                 dynarray_push(current_nodegroup.node_group[secondNodeZone->node].contained, tempNode);
             }
@@ -2666,7 +2572,6 @@ void delete_group_context(a_node_group_context *temp_group_list) {
     dynarray_destroy(temp_group_list->focusList);
 }
 void emptyout_node(a_node *node) {
-
     dynarray_destroy(node->contained);
 
     string_free(&(node->name));
@@ -2938,6 +2843,7 @@ void write_to_file(app_widgets *app_wdgts) {
     }
 
 // =========== then write the actual file ===========
+
     if(write_to_file) {
         fp = fopen(output_filename, "w");
 
@@ -2960,6 +2866,7 @@ void write_to_file(app_widgets *app_wdgts) {
         current_nodegroup.node_group_altered = false;
         mark_unsaved(app_wdgts);
     }
+
 }
 void write_feedback(app_widgets *app_wdgts, char *text) {
     gtk_label_set_text (app_wdgts->l_lbl_main_feedback, text);
@@ -3091,6 +2998,7 @@ void splice_out_node(int *array, int inner_node) {
 
     while(i < array_length) {
         if(array[i] == inner_node) {
+            // we splice the node
             j = i;
             while(j < array_length) {
                 array[j] = array[j + 1];
@@ -3102,6 +3010,7 @@ void splice_out_node(int *array, int inner_node) {
         }
         i++;
     }
+
 }
 bool check_unsaved(void) {
     unsigned int i;
@@ -3152,7 +3061,6 @@ void remove_nodegroup(app_widgets *app_wdgts) {
             codeBox_list[i] = codeBox_list[i + 1];
             i++;
         }
-        //codeBox_list[array_length - 1] = temp_item2;
         if(array_length > 0) {
             dynarray_pop(codeBox_list, &temp_item);
         }
@@ -3179,6 +3087,7 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     } else {
         gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
     }
+
     scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
     scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
     codeBox_list[old_nodegroup_id].scroll_x = gtk_adjustment_get_value (scrollx);
