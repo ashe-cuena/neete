@@ -62,6 +62,14 @@ typedef struct {
     GtkWidget *b_rbtn_plain_text;
 } language_widgets;
 typedef struct {
+    float width;
+    float height;
+    int rowchars;
+    bool valid;
+    unsigned char positions[10];
+    unsigned char num_positions;
+} a_header_dimension;
+typedef struct {
     int x;
     int y;
     int width;
@@ -88,6 +96,8 @@ typedef struct {
     bool obscured;
 
     char status;
+
+    a_header_dimension header_dim;
 } a_node;
 typedef struct {
     int node;
@@ -141,6 +151,7 @@ typedef struct {
     GtkLabel 	*l_lbl_codebox_focus;
 
 //------------------------------------
+//  options window
     GtkWidget 	*w_dlg_options;
     GtkEntry 	*e_txt_options_destinations;
 
@@ -268,6 +279,7 @@ void remove_nodegroup(app_widgets *app_wdgts);
 void set_node_group(int new_group_index, app_widgets *app_wdgts);
 void delete_group_context(a_node_group_context *temp_group_list);
 void emptyout_node(a_node *node);
+a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int header_font_size, int min_width, int max_width);
 
 GtkWidget *pmenu;
 cairo_pattern_t *pattern;
@@ -322,7 +334,8 @@ char default_destination[] = "nete_out.txt";
 GTimer *last_refresh_time;
 toolingmodes toolmode = MOVE;
 closing_modes close_warn_mode = CLOSE;
-int node_head_width = 100;
+int node_head_width = 70;
+node_head_extrawidth = 35;
 int node_head_height = 20;
 int node_descript_height = 0;
 int node_descript_width = 0;
@@ -374,9 +387,11 @@ gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event,
         return TRUE;
     }
 
+
     if(event->type == GDK_DOUBLE_BUTTON_PRESS) {
         doDoubleClick((guint)event->x, (guint)event->y, data, app_wdgts);
     }
+
 
     gtk_widget_queue_draw( widget);
     mark_unsaved(app_wdgts);
@@ -439,6 +454,7 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     if(node_being_edited != -1 && node_group_being_edited != -1) {
         gtk_text_buffer_get_start_iter (app_wdgts->e_txt_codebox_code, &start);
         gtk_text_buffer_get_end_iter (app_wdgts->e_txt_codebox_code, &end);
+
 
         name = gtk_entry_get_text (app_wdgts->e_txt_codebox_name);
         description = gtk_entry_get_text (app_wdgts->e_txt_codebox_description);
@@ -522,6 +538,7 @@ int nete_new_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea) 
 
     if(current_nodegroup.topNode != -1 ) {
         dynarray_push(current_nodegroup.node_group[current_nodegroup.topNode].contained, newnodeNodeZone.node);
+
     }
 
     primary_nodes = getPrimaryNodes();
@@ -600,6 +617,7 @@ int nete_paste_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea
     return 0;
 }
 int nete_focus_node(__attribute__((unused)) GtkWidget *widget, app_widgets *app_wdgts) {
+
     mousePressed = false;
     focus_item temp_focus_item;
     int* primary_nodes;
@@ -613,6 +631,7 @@ int nete_focus_node(__attribute__((unused)) GtkWidget *widget, app_widgets *app_
     dynarray_destroy(primary_nodes);
 
     if (tempNodeZone.node != -1) {
+
         if (tempNodeZone.zone == head_zone) {
             scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
             scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
@@ -643,7 +662,9 @@ int nete_restore_all(__attribute__((unused)) GtkWidget *widget, app_widgets *app
         current_nodegroup.topNode = temp_focus_item.node;
         gtk_adjustment_set_value (scrollx, temp_focus_item.scroll_x);
         gtk_adjustment_set_value (scrolly, temp_focus_item.scroll_y);
+
     }
+
     if(current_nodegroup.topNode == -1) {
         gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
     } else {
@@ -654,6 +675,7 @@ int nete_restore_all(__attribute__((unused)) GtkWidget *widget, app_widgets *app
     return 0;
 }
 void on_btn_rdo_move_toggled(GtkToggleButton *togglebutton, __attribute__((unused)) gpointer user_data) {
+
     if (gtk_toggle_button_get_active(togglebutton)) {
         toolmode = MOVE;
     }
@@ -664,6 +686,7 @@ void on_btn_rdo_exenter_toggled (GtkToggleButton *togglebutton, __attribute__((u
     }
 }
 void on_btn_rdo_link_toggled (GtkToggleButton *togglebutton, __attribute__((unused)) gpointer user_data) {
+
     if (gtk_toggle_button_get_active(togglebutton)) {
         toolmode = JOIN;
     }
@@ -674,6 +697,7 @@ gboolean on_msg_file_save_warn_delete_event (GtkWidget *widget, GdkEvent  *event
     return TRUE;
 }
 void on_window_delete_event(GtkWidget *object, app_widgets *app_wdgts, gpointer user_data) {
+
     if(check_unsaved()) {
         close_warn_mode = QUIT;
         gtk_widget_show(user_data);
@@ -682,6 +706,7 @@ void on_window_delete_event(GtkWidget *object, app_widgets *app_wdgts, gpointer 
     }
 }
 void on_msg_file_save_warn_close (GtkDialog *dialog, gpointer   user_data) {
+
 }
 void on_msg_file_save_warn_response (GtkDialog *dialog, gint       response_id, app_widgets *app_wdgts) {
     if(response_id == -9) {
@@ -754,6 +779,7 @@ void on_mnu_item_open_activate(__attribute__((unused)) GtkMenuItem *menuitem, ap
         g_free(file_name);
     }
 
+// Finished with the "Open Text File" dialog box, so hide it
     gtk_widget_hide(app_wdgts->w_dlg_file_choose);
 }
 void on_mnu_item_save_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -807,6 +833,7 @@ void on_mnu_nete_quit_activate(__attribute__((unused)) GtkMenuItem *menuitem,  g
     if(check_unsaved()) {
         close_warn_mode = QUIT;
         gtk_widget_show(user_data);
+
     } else {
         gtk_main_quit();
     }
@@ -815,9 +842,11 @@ void on_mnu_item_close_activate(__attribute__((unused)) GtkMenuItem *menuitem, a
     if(current_nodegroup.node_group_altered) {
         close_warn_mode = CLOSE;
         gtk_widget_show(app_wdgts->w_msg_file_save_warn);
+
     } else {
         remove_nodegroup(app_wdgts);
     }
+
 }
 void on_cmnu_wrap_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app_wdgts, gpointer user_data) {
     printf("text wrap mode changed \n");
@@ -963,6 +992,7 @@ void on_btn_codebox_tocodebox_clicked(__attribute__((unused)) GtkButton *widget,
         deactivate_quit();
 
         node_displacement_count ++;
+
     }
 }
 void on_btn_codebox_tohead_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
@@ -1054,6 +1084,7 @@ int main(int argc, char **argv)  {
     pango_attr_list_insert(attrlist, attr);
     builder = gtk_builder_new ();
     if( gtk_builder_add_from_resource (builder,"/org/nete/ui/nete.gui",&error) == 0)
+
     {
         printf("gtk_builder_add_from_file FAILED %s\n",error->message);
         return EXIT_FAILURE;
@@ -1228,17 +1259,53 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     static const double dashnone[] = {};
 
     node_mode_flags inner_node_modes;
-    float head_width  = node_head_width * scale_factor;
-    float head_height  = node_head_height * scale_factor;
+
+    char single_row[100];
+    unsigned long int i = 0;
+    int header_len;
+
+    unsigned char header_text_positions[10];
+    unsigned char header_text_num_positions;
+    int text_size = node_text_size;
+    a_header_dimension calculated_dimensions;
+    if(!(current_nodegroup.node_group[node].header_dim.valid)) {
+        calculated_dimensions = get_header_dimensions(cr, current_nodegroup.node_group[node].name, node_text_size, node_head_width, (node_head_width + node_head_extrawidth) );
+
+
+        current_nodegroup.node_group[node].header_dim.width = calculated_dimensions.width;
+        current_nodegroup.node_group[node].header_dim.height = calculated_dimensions.height;
+        current_nodegroup.node_group[node].header_dim.rowchars = calculated_dimensions.rowchars;
+
+        current_nodegroup.node_group[node].header_dim.num_positions = calculated_dimensions.num_positions;
+        memcpy( &current_nodegroup.node_group[node].header_dim.positions[0], &calculated_dimensions.positions[0], calculated_dimensions.num_positions );
+
+        current_nodegroup.node_group[node].header_dim.valid = true;
+
+        check_obscured(node);
+        check_obscuring(node);
+    }
+
+    float head_width  = current_nodegroup.node_group[node].header_dim.width * scale_factor;
+    float head_height = current_nodegroup.node_group[node].header_dim.height * scale_factor;
+    int head_rowchars = current_nodegroup.node_group[node].header_dim.rowchars;
+    header_text_num_positions = current_nodegroup.node_group[node].header_dim.num_positions;
+    int head_num_rows = header_text_num_positions;
+    int head_row_height = ceil(head_height / head_num_rows);
+    int head_text_position = 0;
+    memcpy( &header_text_positions[0], &current_nodegroup.node_group[node].header_dim.positions[0], header_text_num_positions );
+
+
     float descript_height = node_descript_height * scale_factor;
     float descript_width = node_descript_width * scale_factor;
     float body_height = height * scale_factor;
     float body_width = width * scale_factor;
     float spacer  = node_spacer_height *scale_factor;
     float children_scale_factor = scale_factor * calculateScale(node, scale_factor, head_height +spacer + descript_height + spacer);
-    int text_size = node_text_size;
+
     if(scale_factor < 0.75)
         text_size = floor(node_text_height * scale_factor);
+
+
 // ============  we start the head =============
     tempcolour = colorConverter(0x888888);
     if(node_modes.last_touched) {
@@ -1327,6 +1394,7 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     }
 //=====================================================
 
+
     if(current_nodegroup.node_group[node].width > 75 && current_nodegroup.node_group[node].height > 35) {
         tempcolour = colorConverter(0xcccccc);
         cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
@@ -1342,9 +1410,23 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     cairo_select_font_face (cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
     cairo_set_font_size (cr, text_size);
     cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
-    cairo_move_to (cr, x + spacer, y + spacer*8);
-    cairo_show_text (cr, name);
-    unsigned long int i = 0;
+
+    header_len = strlen(name);
+
+
+    for(i = 0; i < header_text_num_positions; i++) {
+
+        memcpy( &single_row[0], &name[head_text_position], header_text_positions[i] - head_text_position);
+        single_row[header_text_positions[i] - head_text_position] = '\0';
+
+        cairo_move_to (cr, x + spacer, y + (head_row_height * i ) + (head_row_height/2) + (head_row_height/8) + spacer);
+        cairo_show_text (cr, single_row);
+
+        head_text_position = header_text_positions[i];
+
+    }
+
+    i = 0;
 
     if(children_scale_factor > 0.35) {
         draw_nodes(cr, current_nodegroup.node_group[node].contained, x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor);
@@ -1479,6 +1561,7 @@ void draw_nodes(cairo_t *cr, int *nodes, int x, int y, int width, int height, fl
             if (j == 0 && current_nodegroup.node_group[nodes[i]].next != -1) {
                 draw_arc(cr, nodes[i], current_nodegroup.node_group[nodes[i]].next, x, y, scale_factor);
             }
+
             if((j == 1 && !current_nodegroup.node_group[nodes[i]].obscured) || (j == 2 && current_nodegroup.node_group[nodes[i]].obscured)) {
                 node_modes.last_touched = false;
                 node_modes.last_read = false;
@@ -1519,6 +1602,126 @@ void draw_nodes(cairo_t *cr, int *nodes, int x, int y, int width, int height, fl
         }
     }
 }
+a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int header_font_size, int min_width, int max_width) {
+    cairo_text_extents_t my_font_extents;
+
+    cairo_select_font_face (cr, "monospace", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size (cr, header_font_size);
+
+    cairo_scaled_font_text_extents (cairo_get_scaled_font(cr), header_text, &my_font_extents);
+
+    int total_width = (int)my_font_extents.width;
+
+    cairo_scaled_font_text_extents (cairo_get_scaled_font(cr), "MM", &my_font_extents);
+    int m_width = (int)my_font_extents.width;
+    int temp_width;
+
+    int line_height = (int)my_font_extents.height;
+
+    int len = strlen(header_text);
+    int row_len = 0;
+    int num_rows = 0;
+    int num_num_rows = 0;
+    int word_count;
+    int i;
+    int position;
+    int current_position = 0;
+    int last_position = 0;
+
+    int max_pixel_width = min_width;
+    char *position_pointer;
+
+    char single_row[100];
+    int row_width;
+    bool header_valid;
+    bool end_pending = false;
+
+    a_header_dimension return_dim;
+
+    return_dim.width = min_width + m_width;
+    return_dim.height = line_height + line_height;
+    return_dim.rowchars = len;
+    return_dim.positions[0] = len;
+    return_dim.num_positions = 1;
+
+    if(total_width > min_width && total_width <= max_width) {
+        return_dim.width = total_width + m_width;
+        return_dim.height = line_height + line_height;
+
+    } else if(total_width > max_width) {
+        row_len = ceil(((float)max_width/(float)total_width) * len);
+        num_rows = ceil((float)total_width/(float)max_width);
+        position = 0;
+        header_valid = true;
+        while(header_valid) {
+            current_position = position;
+            word_count = 0;
+            row_width = 0;
+
+            while(row_width < max_width) {
+                last_position = current_position;
+                if(end_pending) {
+                    header_valid = false;
+                    break;
+                }
+                position_pointer = strchr(header_text + current_position + 1,' ');
+                if(position_pointer == NULL) {
+                    end_pending = true;
+                    current_position = len;
+                } else {
+                    current_position = (position_pointer - header_text) ;
+                }
+                memcpy( &single_row[0], header_text + position, current_position - position);
+                single_row[current_position - position] = '\0';
+
+                cairo_scaled_font_text_extents (cairo_get_scaled_font(cr), single_row, &my_font_extents);
+                row_width = my_font_extents.width;
+                word_count ++;
+            }
+
+            if(word_count > 1) {
+                memcpy( &single_row[0], header_text + position, last_position - position );
+                single_row[last_position - position] = '\0';
+                position = last_position;
+                end_pending = false;
+            } else if(word_count <= 1) {
+                if(!end_pending) {
+                    memcpy( &single_row[0], header_text + position, row_len );
+                    single_row[row_len] = '\0';
+                    position += row_len;
+                } else if(end_pending && (len - position) > row_len) {
+                    memcpy( &single_row[0], header_text + position, row_len );
+                    single_row[row_len] = '\0';
+                    position += row_len;
+                    end_pending = false;
+                } else {
+                    memcpy( &single_row[0], header_text + position, len - position );
+                    single_row[len - position] = '\0';
+                    position = len;
+                }
+            } else if(!header_valid) {
+                memcpy( &single_row[0], header_text + position, len - position );
+                single_row[len - position] = '\0';
+                position = len;
+            }
+
+            cairo_scaled_font_text_extents (cairo_get_scaled_font(cr), single_row, &my_font_extents);
+            temp_width = my_font_extents.width;
+            if(temp_width > max_pixel_width) {
+                max_pixel_width = temp_width;
+            }
+            return_dim.positions[num_num_rows] = (unsigned char)position;
+            num_num_rows ++;
+        }
+
+        return_dim.width = max_pixel_width + m_width;
+        return_dim.height = (line_height * num_num_rows + (line_height + line_height));
+        return_dim.rowchars = row_len;
+        return_dim.num_positions = num_num_rows;
+    }
+
+    return return_dim;
+}
 void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
     mousePressed = true;
 
@@ -1538,12 +1741,14 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
             if(tempNodeZone.zone == resize_zone) {
                 node_being_resized = tempNodeZone.node;
             }
+            no_node_selected = false;
         }
-        no_node_selected = false;
+
     } else {
         switch(toolmode) {
         case EXITENTER:
             getNodeAndZone(&newNodeZone, primary_nodes, x, y, 0, 0, current_nodegroup.zoomScaleFactor, tempNodeZone.node);
+
             recontain_node(&tempNodeZone, &newNodeZone, x, y);
             check_obscuring(tempNodeZone.node);
             check_obscured(tempNodeZone.node);
@@ -1565,6 +1770,7 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
 void doMouseDrag2(int x, int y, __attribute__((unused)) gpointer data) {
     int xDifference = 0;
     int yDifference = 0;
+
     if(toolmode == MOVE) {
         if (mousePressed && tempNodeZone.zone == 0) {
             xDifference = snapGrid((x / tempNodeZone.scale_factor))*tempNodeZone.scale_factor - tempNodeZone.x;
@@ -1675,7 +1881,7 @@ float calculateScale(int node, __attribute__((unused)) int y_displacement, float
     for(i = 0; i < dynarray_length(current_nodegroup.node_group[node].contained); i++) {
         current_node = current_nodegroup.node_group[node].contained[i];
         current_x = (current_nodegroup.node_group[current_node].x + current_nodegroup.node_group[current_node].width) * scale_factor;
-        current_y = (current_nodegroup.node_group[current_node].y + current_nodegroup.node_group[current_node].height + (node_head_height +node_spacer_height + node_descript_height + node_spacer_height)) * scale_factor;
+        current_y = (current_nodegroup.node_group[current_node].y + current_nodegroup.node_group[current_node].height + (current_nodegroup.node_group[current_node].header_dim.height +node_spacer_height + node_descript_height + node_spacer_height)) * scale_factor;
 
         if(current_x > max_x)
             max_x = current_x;
@@ -1714,7 +1920,7 @@ void  getNodeAndZone(a_nodezoneinfo *return_nodezone, int *nodes, int x, int y, 
         for(i = 0; i < dynarray_length(nodes); i++) {
             current_node = nodes[i];
             if((obsc_ind == 0 && current_nodegroup.node_group[current_node].obscured) || (obsc_ind == 1 && !current_nodegroup.node_group[current_node].obscured)) {
-                head_height  = node_head_height * scale_factor;
+                head_height  = current_nodegroup.node_group[current_node].header_dim.height * scale_factor;
                 descript_height = node_descript_height * scale_factor;
                 spacer  = node_spacer_height *scale_factor;
 
@@ -1763,23 +1969,29 @@ void  getNodeAndZone(a_nodezoneinfo *return_nodezone, int *nodes, int x, int y, 
     return_nodezone->frame_y = 0;
 }
 void fixZones(int node) {
+    int dynamic_head_width  = (int)current_nodegroup.node_group[node].header_dim.width;
+    int dynamic_head_height = (int)current_nodegroup.node_group[node].header_dim.height;
+
+    node_zones.array[head_zone].width = dynamic_head_width;
+    node_zones.array[head_zone].height = dynamic_head_height;
+
     node_zones.array[body_zone].x = node_flank_width;
-    node_zones.array[body_zone].y = node_head_height + node_spacer_height + node_descript_height + node_spacer_height;
+    node_zones.array[body_zone].y = dynamic_head_height + node_spacer_height + node_descript_height + node_spacer_height;
     node_zones.array[body_zone].width = current_nodegroup.node_group[node].width - node_flank_width * 2;
     node_zones.array[body_zone].height = current_nodegroup.node_group[node].height;
 
     node_zones.array[flank1_zone].x = 0;
-    node_zones.array[flank1_zone].y =  node_head_height + node_spacer_height + node_descript_height + node_spacer_height;
+    node_zones.array[flank1_zone].y =  dynamic_head_height + node_spacer_height + node_descript_height + node_spacer_height;
     node_zones.array[flank1_zone].width = node_flank_width;
     node_zones.array[flank1_zone].height = current_nodegroup.node_group[node].height;
 
     node_zones.array[flank2_zone].x = current_nodegroup.node_group[node].width - node_flank_width;
-    node_zones.array[flank2_zone].y = node_head_height + node_spacer_height + node_descript_height + node_spacer_height;
+    node_zones.array[flank2_zone].y = dynamic_head_height + node_spacer_height + node_descript_height + node_spacer_height;
     node_zones.array[flank2_zone].width = node_flank_width;
     node_zones.array[flank2_zone].height = current_nodegroup.node_group[node].height - node_resize_width;
 
     node_zones.array[resize_zone].x = current_nodegroup.node_group[node].width - node_resize_width;
-    node_zones.array[resize_zone].y = node_head_height + node_spacer_height + node_descript_height + node_spacer_height + current_nodegroup.node_group[node].height - node_resize_width;
+    node_zones.array[resize_zone].y = dynamic_head_height + node_spacer_height + node_descript_height + node_spacer_height + current_nodegroup.node_group[node].height - node_resize_width;
     node_zones.array[resize_zone].width = node_resize_width;
     node_zones.array[resize_zone].height = node_resize_width;
 }
@@ -1854,6 +2066,7 @@ void get_absolutePosition(a_container_pos *container_pos, int node) {
         container_pos->y = (((node_y )*current_scale) + (node_head_height + node_spacer_height)*upper_position.scaleFactor + upper_position.y );
         container_pos->scaleFactor = current_scale;
     }
+
 }
 void launchBox(int node, int line_start, app_widgets *app_wdgts) {
     char num_buf[3];
@@ -2210,7 +2423,7 @@ void check_obscured(int node) {
                 if( (current_nodegroup.node_group[node].x + node_head_width/2) > current_nodegroup.node_group[i].x &&
                         current_nodegroup.node_group[node].x < (current_nodegroup.node_group[i].x + current_nodegroup.node_group[i].width) &&
                         current_nodegroup.node_group[node].y > current_nodegroup.node_group[i].y &&
-                        current_nodegroup.node_group[node].y < (current_nodegroup.node_group[i].y + current_nodegroup.node_group[i].height + node_head_height)
+                        current_nodegroup.node_group[node].y < (current_nodegroup.node_group[i].y + current_nodegroup.node_group[i].height + current_nodegroup.node_group[i].header_dim.height)
                   ) {
                     current_nodegroup.node_group[node].obscured = true;
                     dynarray_push(current_nodegroup.node_group[node].obscured_by, i);
@@ -2224,7 +2437,7 @@ void check_obscured(int node) {
             if( (current_nodegroup.node_group[node].x + node_head_width/2) > current_nodegroup.node_group[contained_node].x &&
                     current_nodegroup.node_group[node].x < (current_nodegroup.node_group[contained_node].x + current_nodegroup.node_group[contained_node].width) &&
                     current_nodegroup.node_group[node].y > current_nodegroup.node_group[contained_node].y &&
-                    current_nodegroup.node_group[node].y < (current_nodegroup.node_group[contained_node].y + current_nodegroup.node_group[contained_node].height + node_head_height)
+                    current_nodegroup.node_group[node].y < (current_nodegroup.node_group[contained_node].y + current_nodegroup.node_group[contained_node].height + current_nodegroup.node_group[contained_node].header_dim.height)
               ) {
                 current_nodegroup.node_group[node].obscured = true;
                 dynarray_push(current_nodegroup.node_group[node].obscured_by, contained_node);
@@ -2261,7 +2474,7 @@ void check_obscuring(int node) {
                 if( (current_nodegroup.node_group[i].x + node_head_width/2) > current_nodegroup.node_group[node].x &&
                         current_nodegroup.node_group[i].x < (current_nodegroup.node_group[node].x + current_nodegroup.node_group[node].width) &&
                         current_nodegroup.node_group[i].y > current_nodegroup.node_group[node].y &&
-                        current_nodegroup.node_group[i].y < (current_nodegroup.node_group[node].y + current_nodegroup.node_group[node].height + node_head_height)
+                        current_nodegroup.node_group[i].y < (current_nodegroup.node_group[node].y + current_nodegroup.node_group[node].height + current_nodegroup.node_group[node].header_dim.height)
                   ) {
                     current_nodegroup.node_group[i].obscured = true;
                     dynarray_push(current_nodegroup.node_group[i].obscured_by, node);
@@ -2275,7 +2488,7 @@ void check_obscuring(int node) {
             if( (current_nodegroup.node_group[contained_node].x + node_head_width/2) > current_nodegroup.node_group[node].x &&
                     current_nodegroup.node_group[contained_node].x < (current_nodegroup.node_group[node].x + current_nodegroup.node_group[node].width) &&
                     current_nodegroup.node_group[contained_node].y > current_nodegroup.node_group[node].y &&
-                    current_nodegroup.node_group[contained_node].y < (current_nodegroup.node_group[node].y + current_nodegroup.node_group[node].height + node_head_height)
+                    current_nodegroup.node_group[contained_node].y < (current_nodegroup.node_group[node].y + current_nodegroup.node_group[node].height + current_nodegroup.node_group[node].header_dim.height)
               ) {
                 current_nodegroup.node_group[contained_node].obscured = true;
                 dynarray_push(current_nodegroup.node_group[contained_node].obscured_by, node);
@@ -2344,6 +2557,12 @@ int node_group_push(int x, int y, int width, int height, int next, int previous,
     string_init(&temp_node.real_code);
     string_set(&temp_node.real_code, real_code);
 
+
+    temp_node.header_dim.width = 1;
+    temp_node.header_dim.height = 1;
+    temp_node.header_dim.rowchars = 1;
+    temp_node.header_dim.valid = false;
+
     dynarray_push(current_nodegroup.node_group, temp_node);
 
     node_pos = dynarray_length(current_nodegroup.node_group) - 1;
@@ -2406,6 +2625,11 @@ int node_group_push_id(int x, int y, int width, int height, int next, int previo
     string_init(&temp_node.real_code);
     string_set(&temp_node.real_code, real_code);
 
+    temp_node.header_dim.width = 1;
+    temp_node.header_dim.height = 1;
+    temp_node.header_dim.rowchars = 1;
+    temp_node.header_dim.valid = false;
+
     dynarray_push(current_nodegroup.node_group, temp_node);
     node_pos = dynarray_length(current_nodegroup.node_group) - 1;
 
@@ -2422,6 +2646,8 @@ void node_group_update_id(int node_id, int group_id, char *name, char *descripti
     string_set(&codeBox_list[group_id].node_group[node_id].tail, tail);
     string_set(&codeBox_list[group_id].node_group[node_id].real_code, real_code);
     codeBox_list[group_id].node_group[node_id].status = status;
+
+    codeBox_list[group_id].node_group[node_id].header_dim.valid = false;
 }
 void init_nodes() {
     int* temp_contained_array;
@@ -2559,6 +2785,7 @@ void init_node_group_context(a_node_group_context *temp_group_list) {
 }
 void delete_group_context(a_node_group_context *temp_group_list) {
     int i;
+
 
     string_free(&(temp_group_list->name));
     string_free(&(temp_group_list->destination));
@@ -2789,6 +3016,7 @@ char* stringify_nodes(void) {
 end:
     cJSON_Delete(output_code);
     return string;
+
 }
 void write_to_file(app_widgets *app_wdgts) {
     gchar *file_name = NULL;
@@ -2998,7 +3226,6 @@ void splice_out_node(int *array, int inner_node) {
 
     while(i < array_length) {
         if(array[i] == inner_node) {
-            // we splice the node
             j = i;
             while(j < array_length) {
                 array[j] = array[j + 1];
@@ -3061,6 +3288,7 @@ void remove_nodegroup(app_widgets *app_wdgts) {
             codeBox_list[i] = codeBox_list[i + 1];
             i++;
         }
+        //codeBox_list[array_length - 1] = temp_item2;
         if(array_length > 0) {
             dynarray_pop(codeBox_list, &temp_item);
         }
@@ -3102,5 +3330,6 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     gtk_container_remove (codeBox_list[old_nodegroup_id].codebox_container, app_wdgts->l_lbl_codebox_focus);
     gtk_container_add (current_nodegroup.codebox_container, app_wdgts->l_lbl_codebox_focus);
     gtk_container_add (current_nodegroup.codebox_container, app_wdgts->w_darea_scroll);
+
 }
 
