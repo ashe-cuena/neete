@@ -1231,12 +1231,21 @@ void redraw(cairo_t *cr) {
 void draw_arc(cairo_t *cr, int node1, int node2, int frame_x, int frame_y, float scale_factor) {
     RGB tempcolour;
     int arc_overhang = 10;
+    int current_head_height1 = node_head_height;
+    int current_head_height2 = node_head_height;
+    if((current_nodegroup.node_group[node1].header_dim.valid)) {
+        current_head_height1 = current_nodegroup.node_group[node1].header_dim.height;
+    }
+    if((current_nodegroup.node_group[node2].header_dim.valid)) {
+        current_head_height2 = current_nodegroup.node_group[node2].header_dim.height;
+    }
+
     tempcolour = colorConverter(0xcccccc);
     cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
-    cairo_move_to (cr, frame_x + (current_nodegroup.node_group[node1].x + current_nodegroup.node_group[node1].width)*scale_factor + 2, frame_y + (current_nodegroup.node_group[node1].y + (node_head_height + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node1].height / 2)*scale_factor);
-    cairo_line_to (cr, frame_x + (current_nodegroup.node_group[node1].x + current_nodegroup.node_group[node1].width + arc_overhang)*scale_factor + 2, frame_y + (current_nodegroup.node_group[node1].y + (node_head_height + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node1].height / 2)*scale_factor);
-    cairo_line_to (cr, frame_x + (current_nodegroup.node_group[node2].x - arc_overhang)*scale_factor - 2, frame_y + (current_nodegroup.node_group[node2].y + (node_head_height + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node2].height / 2)*scale_factor);
-    cairo_line_to (cr, frame_x + current_nodegroup.node_group[node2].x*scale_factor - 2, frame_y + (current_nodegroup.node_group[node2].y + (node_head_height + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node2].height / 2)*scale_factor);
+    cairo_move_to (cr, frame_x + (current_nodegroup.node_group[node1].x + current_nodegroup.node_group[node1].width)*scale_factor + 2, frame_y + (current_nodegroup.node_group[node1].y + (current_head_height1 + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node1].height / 2)*scale_factor);
+    cairo_line_to (cr, frame_x + (current_nodegroup.node_group[node1].x + current_nodegroup.node_group[node1].width + arc_overhang)*scale_factor + 2, frame_y + (current_nodegroup.node_group[node1].y + (current_head_height1 + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node1].height / 2)*scale_factor);
+    cairo_line_to (cr, frame_x + (current_nodegroup.node_group[node2].x - arc_overhang)*scale_factor - 2, frame_y + (current_nodegroup.node_group[node2].y + (current_head_height2 + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node2].height / 2)*scale_factor);
+    cairo_line_to (cr, frame_x + current_nodegroup.node_group[node2].x*scale_factor - 2, frame_y + (current_nodegroup.node_group[node2].y + (current_head_height2 + node_spacer_height + node_descript_height + node_spacer_height) + current_nodegroup.node_group[node2].height / 2)*scale_factor);
     cairo_set_line_width (cr, 4);
     cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
     cairo_stroke (cr);
