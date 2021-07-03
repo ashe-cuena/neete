@@ -3,16 +3,6 @@
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <requires lib="gtksourceview" version="3.0"/>
-  <object class="GtkFileFilter" id="filefilter1">
-    <mime-types>
-      <mime-type>image/jpeg</mime-type>
-      <mime-type>image/png</mime-type>
-    </mime-types>
-    <patterns>
-      <pattern>*.nete</pattern>
-      <pattern>*.nete2</pattern>
-    </patterns>
-  </object>
   <object class="GtkWindow" id="window">
     <property name="width_request">800</property>
     <property name="height_request">500</property>
@@ -116,6 +106,36 @@
                         <property name="label" translatable="yes">Render</property>
                         <signal name="activate" handler="on_mnu_item_render_activate" swapped="no"/>
                         <accelerator key="r" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="mnu_open_session">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Open Session</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_mnu_open_session_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="mnu_save_session">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Save Session</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_mnu_save_session_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
                       </object>
                     </child>
                     <child>
@@ -594,7 +614,7 @@
     <property name="deletable">False</property>
     <property name="transient_for">window</property>
     <property name="program_name">New Era Text Editor</property>
-    <property name="version">1.17</property>
+    <property name="version">1.19</property>
     <property name="copyright" translatable="yes">(c) 2020 Tinashe Gwena</property>
     <property name="logo">res/nete_logo.png</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
@@ -629,7 +649,6 @@
     <property name="title" translatable="yes">Open File ...</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">window</property>
-    <property name="filter">filefilter1</property>
     <child>
       <placeholder/>
     </child>
