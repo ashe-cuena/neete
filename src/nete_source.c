@@ -149,6 +149,7 @@ typedef struct {
     GtkNotebook	*t_ntb_nete_tabs;
     GtkWidget	*w_darea_scroll;
     GtkLabel 	*l_lbl_codebox_focus;
+//GtkWidget *
 
 //------------------------------------
 //  options window
@@ -169,6 +170,11 @@ typedef struct {
     GtkWidget *w_dlg_about;
 
     language_widgets language_buttons;
+
+
+//----------------------------------------------
+    GtkFileFilter *netefilter;
+    GtkFileFilter *sessionfilter;
 } app_widgets;
 typedef struct {
     int original;
@@ -244,6 +250,7 @@ void load_codeBox(char *nete_string);
 void launchBox(int node, int line_start, app_widgets *app_wdgts);
 void node_group_update_id(int node_id, int group_id, char *name, char *description, char *head, int priority,  char *real_code, char *tail, char status);
 char* stringify_nodes(void);
+char* stringify_session(void);
 void draw_text_in_box(cairo_t *cr, char *real_code, float x, float y, float width, float height);
 void drawX(cairo_t *cr, int x, int y, int width, int height);
 void draw_nodes(cairo_t *cr, int *nodes, int x, int y, int width, int height, float scale_factor);
@@ -280,6 +287,8 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts);
 void delete_group_context(a_node_group_context *temp_group_list);
 void emptyout_node(a_node *node);
 a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int header_font_size, int min_width, int max_width);
+void load_codeBox_file(char *file_name, app_widgets *app_wdgts);
+void load_session(char *nete_string, app_widgets *app_wdgts);
 
 GtkWidget *pmenu;
 cairo_pattern_t *pattern;
@@ -361,6 +370,7 @@ gboolean on_drawingarea_draw( __attribute__((unused)) GtkWidget *widget, cairo_t
 }
 gint on_ntb_nete_tabs_switch_page(__attribute__((unused)) GtkButton *widget, __attribute__((unused)) GtkWidget *page, guint page_num, app_widgets *app_wdgts, __attribute__((unused)) gpointer data)
 {
+
 
     set_node_group(page_num, app_wdgts);
 
@@ -451,6 +461,7 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     GtkTextIter start;
     GtkTextIter end;
 
+//printf("submitting\n");
     if(node_being_edited != -1 && node_group_being_edited != -1) {
         gtk_text_buffer_get_start_iter (app_wdgts->e_txt_codebox_code, &start);
         gtk_text_buffer_get_end_iter (app_wdgts->e_txt_codebox_code, &end);
@@ -503,6 +514,7 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     mark_unsaved(app_wdgts);
 }
 gboolean on_window_codebox_delete_event( GtkWidget *widget, __attribute__((unused)) GdkEvent *event, __attribute__((unused)) gpointer data) {
+//gint x, y;
     gtk_window_get_position(GTK_WINDOW(widget), &codeboxWindowPos.x, &codeboxWindowPos.y);
     first_time_codebox = false;
 
@@ -538,7 +550,6 @@ int nete_new_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea) 
 
     if(current_nodegroup.topNode != -1 ) {
         dynarray_push(current_nodegroup.node_group[current_nodegroup.topNode].contained, newnodeNodeZone.node);
-
     }
 
     primary_nodes = getPrimaryNodes();
@@ -609,6 +620,7 @@ int nete_paste_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea
 
     check_obscuring(pastedNodeZone.node);
     check_obscured(pastedNodeZone.node);
+//        redraw();
     gtk_widget_queue_draw(ddarea);
     deactivate_quit();
 
@@ -726,6 +738,7 @@ void on_msg_file_save_warn_response (GtkDialog *dialog, gint       response_id, 
 gint on_btn_line_submit_clicked(__attribute__((unused)) GtkButton *widget,
                                 app_widgets *app_wdgts)
 {
+    //printf("find line clicked\n");
     line_search(app_wdgts);
 
     return TRUE;
@@ -739,46 +752,24 @@ void on_mnu_item_open_activate(__attribute__((unused)) GtkMenuItem *menuitem, ap
     gchar *file_name = NULL;        // Name of file to open from dialog box
     gchar *file_contents = NULL;    // For reading contents of file
     gboolean file_success = FALSE;  // File read status
+//GtkFileFilter *filter;
 
     char *last_slash;
 
     char *tab_name;
+
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose), app_wdgts->netefilter);
     gtk_widget_show(app_wdgts->w_dlg_file_choose);
 
     if (gtk_dialog_run(GTK_DIALOG (app_wdgts->w_dlg_file_choose)) == GTK_RESPONSE_OK) {
         file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose));
         if (file_name != NULL) {
-            file_success = g_file_get_contents(file_name, &file_contents, NULL, NULL);
-            if (file_success) {
-                create_new_tab(app_wdgts);
+            load_codeBox_file(file_name, app_wdgts);
 
-                load_codeBox(file_contents);
-
-                last_slash = strrchr(file_name, '/');
-                string_init(&tab_name);
-                string_set(&tab_name, last_slash + 1);
-
-                gtk_notebook_set_tab_label_text (app_wdgts->t_ntb_nete_tabs,
-                                                 gtk_notebook_get_nth_page (app_wdgts->t_ntb_nete_tabs, current_codeBox),
-                                                 tab_name);
-
-                string_set(&(current_nodegroup.name), tab_name);
-                string_set(&(current_nodegroup.fileName), file_name);
-
-                string_free(&tab_name) ;
-
-                gtk_notebook_set_current_page (app_wdgts->t_ntb_nete_tabs,
-                                               current_codeBox);
-
-                current_nodegroup.fileSaveAsMode = false;
-
-                gtk_widget_queue_draw(app_wdgts->drawingArea);
-            }
-            g_free(file_contents);
         }
         g_free(file_name);
     }
-
+//gtk_file_chooser_remove_filter (GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose), app_wdgts->netefilter);
 // Finished with the "Open Text File" dialog box, so hide it
     gtk_widget_hide(app_wdgts->w_dlg_file_choose);
 }
@@ -797,13 +788,16 @@ void on_mnu_item_render_activate(__attribute__((unused)) GtkMenuItem *menuitem, 
 
     string_init(&feedback_text);
 
+
     string_set(&output_text, "");
     clearRenderedData();
+
     renderDataNodes(primary_nodes, false);
 
     fp = fopen(current_nodegroup.destination, "w");
 
     fprintf(fp, "%s\n", output_text);
+
 
     fclose(fp);
 
@@ -845,6 +839,104 @@ void on_mnu_item_close_activate(__attribute__((unused)) GtkMenuItem *menuitem, a
 
     } else {
         remove_nodegroup(app_wdgts);
+    }
+
+}
+void on_mnu_open_session_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
+    gchar *file_name = NULL;        // Name of file to open from dialog box
+    gchar *file_contents = NULL;    // For reading contents of file
+    gboolean file_success = FALSE;  // File read status
+
+    char *last_slash;
+
+    char *tab_name;
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose), app_wdgts->sessionfilter);
+    gtk_widget_show(app_wdgts->w_dlg_file_choose);
+
+    if (gtk_dialog_run(GTK_DIALOG (app_wdgts->w_dlg_file_choose)) == GTK_RESPONSE_OK) {
+        file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose));
+        if (file_name != NULL) {
+
+            file_success = g_file_get_contents(file_name, &file_contents, NULL, NULL);
+            if (file_success) {
+
+
+                load_session(file_contents, app_wdgts);
+
+            }
+            g_free(file_contents);
+
+
+        }
+        g_free(file_name);
+    }
+//gtk_file_chooser_remove_filter(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose), app_wdgts->sessionfilter);
+// Finished with the "Open Text File" dialog box, so hide it
+    gtk_widget_hide(app_wdgts->w_dlg_file_choose);
+}
+void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
+    gchar *file_name = NULL;
+    char *output_filename;
+    char *last_slash;
+    char *tab_name;
+
+    char feedback_text[50];
+
+    char *string_session;
+
+    FILE *fp;
+    bool write_to_file = false;
+
+    string_init(&output_filename);
+
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_save), app_wdgts->sessionfilter);
+
+    gtk_widget_show(app_wdgts->w_dlg_file_save);
+
+    if (gtk_dialog_run(GTK_DIALOG (app_wdgts->w_dlg_file_save)) == GTK_RESPONSE_OK) {
+        file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_save));
+
+        string_set(&output_filename, file_name);
+
+        if(strncmp(".prj", (file_name + strlen(file_name) - 4), 4) == 0) {
+            printf("session file\n");
+        } else {
+            string_add(&output_filename, ".prj");
+        }
+
+        // ====== set up the tab's name =========================
+        last_slash = strrchr(file_name, '/');
+        string_init(&tab_name);
+        string_set(&tab_name, last_slash + 1);
+
+        write_to_file = true;
+
+        string_free(&tab_name) ;
+
+        g_free(file_name);
+    }
+    gtk_widget_hide(app_wdgts->w_dlg_file_save);
+
+
+// =========== then write the actual file ===========
+
+    if(write_to_file) {
+        fp = fopen(output_filename, "w");
+
+        string_session = stringify_session();
+        printf("output session -> \n\n%s\n", string_session);
+        fputs(string_session, fp);
+        fclose(fp);
+
+        free(string_session);
+        string_free(&output_filename);
+
+        time_t t = time(NULL);
+        struct tm tm = *localtime(&t);
+        sprintf(feedback_text, "session saved: %d-%02d-%02d %02d:%02d:%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+        write_feedback(app_wdgts, feedback_text);
+
     }
 
 }
@@ -1084,7 +1176,7 @@ int main(int argc, char **argv)  {
     pango_attr_list_insert(attrlist, attr);
     builder = gtk_builder_new ();
     if( gtk_builder_add_from_resource (builder,"/org/nete/ui/nete.gui",&error) == 0)
-
+//if( gtk_builder_add_from_file (builder,"ui/nete.gui" ,&error) == 0)
     {
         printf("gtk_builder_add_from_file FAILED %s\n",error->message);
         return EXIT_FAILURE;
@@ -1131,6 +1223,17 @@ int main(int argc, char **argv)  {
     widgets->language_buttons.b_rbtn_python = GTK_WIDGET(gtk_builder_get_object(builder, "rbtn_python"));
     widgets->language_buttons.b_rbtn_verilog = GTK_WIDGET(gtk_builder_get_object(builder, "rbtn_verilog"));
     widgets->language_buttons.b_rbtn_plain_text = GTK_WIDGET(gtk_builder_get_object(builder, "rbtn_plain_text"));
+
+    widgets->netefilter = gtk_file_filter_new();
+    gtk_file_filter_add_pattern(widgets->netefilter, "*.nete");
+    gtk_file_filter_add_pattern(widgets->netefilter, "*.json");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(widgets->w_dlg_file_choose), widgets->netefilter);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(widgets->w_dlg_file_save), widgets->netefilter);
+
+    widgets->sessionfilter = gtk_file_filter_new();
+    gtk_file_filter_add_pattern(widgets->sessionfilter, "*.prj");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(widgets->w_dlg_file_choose), widgets->sessionfilter);
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(widgets->w_dlg_file_save), widgets->sessionfilter);
 
     gtk_entry_set_attributes(GTK_ENTRY(widgets->e_txt_codebox_name), attrlist);
     pango_attr_list_unref(attrlist);
@@ -1292,6 +1395,7 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
 
         check_obscured(node);
         check_obscuring(node);
+
     }
 
     float head_width  = current_nodegroup.node_group[node].header_dim.width * scale_factor;
@@ -1313,7 +1417,6 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
 
     if(scale_factor < 0.75)
         text_size = floor(node_text_height * scale_factor);
-
 
 // ============  we start the head =============
     tempcolour = colorConverter(0x888888);
@@ -1422,9 +1525,7 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
 
     header_len = strlen(name);
 
-
     for(i = 0; i < header_text_num_positions; i++) {
-
         memcpy( &single_row[0], &name[head_text_position], header_text_positions[i] - head_text_position);
         single_row[header_text_positions[i] - head_text_position] = '\0';
 
@@ -1660,7 +1761,9 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
     } else if(total_width > max_width) {
         row_len = ceil(((float)max_width/(float)total_width) * len);
         num_rows = ceil((float)total_width/(float)max_width);
+
         position = 0;
+
         header_valid = true;
         while(header_valid) {
             current_position = position;
@@ -1668,6 +1771,7 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
             row_width = 0;
 
             while(row_width < max_width) {
+
                 last_position = current_position;
                 if(end_pending) {
                     header_valid = false;
@@ -1680,15 +1784,18 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
                 } else {
                     current_position = (position_pointer - header_text) ;
                 }
+
                 memcpy( &single_row[0], header_text + position, current_position - position);
                 single_row[current_position - position] = '\0';
 
                 cairo_scaled_font_text_extents (cairo_get_scaled_font(cr), single_row, &my_font_extents);
+
                 row_width = my_font_extents.width;
                 word_count ++;
             }
 
             if(word_count > 1) {
+
                 memcpy( &single_row[0], header_text + position, last_position - position );
                 single_row[last_position - position] = '\0';
                 position = last_position;
@@ -1719,6 +1826,7 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
             if(temp_width > max_pixel_width) {
                 max_pixel_width = temp_width;
             }
+
             return_dim.positions[num_num_rows] = (unsigned char)position;
             num_num_rows ++;
         }
@@ -1752,12 +1860,10 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
             }
             no_node_selected = false;
         }
-
     } else {
         switch(toolmode) {
         case EXITENTER:
             getNodeAndZone(&newNodeZone, primary_nodes, x, y, 0, 0, current_nodegroup.zoomScaleFactor, tempNodeZone.node);
-
             recontain_node(&tempNodeZone, &newNodeZone, x, y);
             check_obscuring(tempNodeZone.node);
             check_obscured(tempNodeZone.node);
@@ -2012,7 +2118,6 @@ bool check_not_descendent(int main_node, int desc_node) {
 
         if(!check_not_descendent(current_nodegroup.node_group[main_node].contained[i], desc_node))
             return false;
-
     }
 
     return true;
@@ -2795,7 +2900,6 @@ void init_node_group_context(a_node_group_context *temp_group_list) {
 void delete_group_context(a_node_group_context *temp_group_list) {
     int i;
 
-
     string_free(&(temp_group_list->name));
     string_free(&(temp_group_list->destination));
     string_free(&(temp_group_list->fileName));
@@ -3046,6 +3150,7 @@ void write_to_file(app_widgets *app_wdgts) {
         string_set(&output_filename, current_nodegroup.fileName);
         write_to_file = true;
     } else {
+        gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_save), app_wdgts->netefilter);
         gtk_widget_show(app_wdgts->w_dlg_file_save);
 
         if (gtk_dialog_run(GTK_DIALOG (app_wdgts->w_dlg_file_save)) == GTK_RESPONSE_OK) {
@@ -3103,6 +3208,135 @@ void write_to_file(app_widgets *app_wdgts) {
         current_nodegroup.node_group_altered = false;
         mark_unsaved(app_wdgts);
     }
+
+}
+void load_codeBox_file(char *file_name, app_widgets *app_wdgts) {
+    gchar *file_contents = NULL;    // For reading contents of file
+    gboolean file_success = FALSE;  // File read status
+
+    char *last_slash;
+
+    char *tab_name;
+
+
+    file_success = g_file_get_contents(file_name, &file_contents, NULL, NULL);
+    if (file_success) {
+        create_new_tab(app_wdgts);
+
+        load_codeBox(file_contents);
+
+        last_slash = strrchr(file_name, '/');
+        string_init(&tab_name);
+        string_set(&tab_name, last_slash + 1);
+
+        gtk_notebook_set_tab_label_text (app_wdgts->t_ntb_nete_tabs,
+                                         gtk_notebook_get_nth_page (app_wdgts->t_ntb_nete_tabs, current_codeBox),
+                                         tab_name);
+
+        string_set(&(current_nodegroup.name), tab_name);
+        string_set(&(current_nodegroup.fileName), file_name);
+
+        string_free(&tab_name) ;
+
+        gtk_notebook_set_current_page (app_wdgts->t_ntb_nete_tabs,
+                                       current_codeBox);
+
+        current_nodegroup.fileSaveAsMode = false;
+
+        gtk_widget_queue_draw(app_wdgts->drawingArea);
+    }
+    g_free(file_contents);
+}
+void load_session(char *nete_string, app_widgets *app_wdgts) {
+    cJSON *incoming_node_group = NULL;
+    cJSON *code_node = NULL;
+    cJSON *contained_member;
+    int* temp_contained;
+
+    cJSON *nete_json;
+
+    int real_priority;
+    unsigned int i;
+    char real_status = 0;
+
+    cJSON *name;
+    cJSON *fileName;
+    cJSON *topNode;
+    cJSON *zoomScaleFactor;
+    cJSON *destination;
+
+    char * file_name;
+    nete_json = cJSON_Parse(nete_string);
+
+    cJSON_ArrayForEach(code_node, nete_json)
+    {
+        fileName = cJSON_GetObjectItem(code_node, "fileName");
+        if(fileName) {
+            string_init(&file_name);
+
+            string_set(&file_name, fileName->valuestring);
+
+            printf("file name -> %s\n", file_name);
+            load_codeBox_file(file_name, app_wdgts);
+            string_free(&file_name) ;
+        }
+    }
+
+
+    cJSON_Delete(nete_json);
+}
+char* stringify_session(void) {
+    char *string = NULL;
+
+    cJSON *output_node_group = NULL;
+    cJSON *codebox = NULL;
+
+    cJSON *name;
+    cJSON *fileName;
+    cJSON *zoomScaleFactor;
+    cJSON *topNode;
+    cJSON *destination;
+
+    size_t index = 0;
+    unsigned long int i = 0;
+
+
+
+
+    output_node_group = cJSON_CreateArray();
+    if (output_node_group == NULL)
+    {
+        goto end;
+    }
+
+    for (index = 0; index < (dynarray_length(codeBox_list)); ++index)
+    {
+
+        if (strlen(codeBox_list[index].fileName) > 5) {
+            cJSON *output_code = cJSON_CreateObject();
+            if (output_code == NULL)
+            {
+                goto end;
+            }
+            cJSON_AddItemToArray(output_node_group, output_code);
+
+            json_add_string(name, codeBox_list[index].name, output_code, end);
+            json_add_string(fileName, codeBox_list[index].fileName, output_code, end);
+            json_add_string(destination, codeBox_list[index].destination, output_code, end);
+            json_add_number(topNode, codeBox_list[index].topNode, output_code, end);
+            json_add_number(zoomScaleFactor, codeBox_list[index].zoomScaleFactor, output_code, end);
+
+        }
+    }
+    string = cJSON_Print(output_node_group);
+    if (string == NULL)
+    {
+        fprintf(stderr, "Failed to print output_code.\n");
+    }
+
+end:
+    cJSON_Delete(output_node_group);
+    return string;
 
 }
 void write_feedback(app_widgets *app_wdgts, char *text) {
@@ -3235,6 +3469,7 @@ void splice_out_node(int *array, int inner_node) {
 
     while(i < array_length) {
         if(array[i] == inner_node) {
+            // we splice the node
             j = i;
             while(j < array_length) {
                 array[j] = array[j + 1];
@@ -3297,7 +3532,6 @@ void remove_nodegroup(app_widgets *app_wdgts) {
             codeBox_list[i] = codeBox_list[i + 1];
             i++;
         }
-        //codeBox_list[array_length - 1] = temp_item2;
         if(array_length > 0) {
             dynarray_pop(codeBox_list, &temp_item);
         }
@@ -3331,6 +3565,7 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     codeBox_list[old_nodegroup_id].scroll_y = gtk_adjustment_get_value (scrolly);
     gtk_adjustment_set_value (scrollx, current_nodegroup.scroll_x);
     gtk_adjustment_set_value (scrolly, current_nodegroup.scroll_y);
+
 
     no_node_selected = true;
     g_object_ref(app_wdgts->l_lbl_codebox_focus);
