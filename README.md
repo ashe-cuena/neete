@@ -3,7 +3,7 @@
 ## Introduction
 Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.
 
-NETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview with the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
+NETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
 
 1. Drawing pictures on a screen,
 2. Mathematical nodes and arcs.
@@ -14,7 +14,7 @@ So far this progam has been tested on Linux x86 and Raspberry Pi. The code requi
 ````
 sudo apt-get install build-essential libgtk-3-dev libgtksourceview-3.0-dev
 ````
-The program source is available from https://github.com/ashe-cuena/nete . After downloading, compile the source by running:
+Then compile the source by running:
 ````
 make
 ````
@@ -57,8 +57,9 @@ The same one node does both jobs but in different scenarios. The determinant is 
 
 Nodes also carry with them two other visible features, which are title and priority. A description field is included and this is more or less a comment feature with no real consequence on operations.
 ### Codebox - Head, Tail and Textbox
-
-![Codebox Structure](/images/codebox_struct.png)  ![Codebox Example](/images/codeboxwithcode2.png)
+Codebox structure             |  Real CodeBox
+:-------------------------:|:-------------------------:
+![Codebox Structure](/images/codebox_struct3.png) | ![Codebox Example](/images/codeboxwithcode3.png)
 
 On the inside of a node there are three other important text fields, which are the head, tail and textbox. These are pertinent for the actual low level of operations and they form the basis of the text. Upon rendering a codebox, these elements are batched in the order:
 
@@ -106,12 +107,34 @@ The nodes may have 10 priorities as shown in the figure, so this feature must be
 
 Arc following is the other rule which determines ordering or rendering. Here the system will follow the arcs in its path.
 Using this simple set of rules, the system will stitch together all the text contained in the nodes and give out a rendered text file to be used as desired. 
+## Focus and Ignore
+### Focus
+This is a function that is used on containers to have elements contained in a selected node being the only visible ones on the screen, thus putting them in focus. It is useful whenever attention needs to be placed on a particular container. 
+
+
+Different Sizes             |  Focus Node
+:-------------------------:|:-------------------------:
+![Different Size Nodes](/images/three_size_node2.png) | ![Node in Focus](/images/focus_node2.png)
+
+
+
+
+A situation though where "Focus" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.
+
+This feature allows the user to drill into deeper and deeper detail as and where necessary allowing control over the amount of attention needed in different scenarios. 
+### Ignore
+"Ignore" is a tick box that can be selected on any node, be it a container or a codebox. Once selected, the node will be struck out visually with an "X" as below. 
+
+![Node to ignore](/images/ignore_node.png)
+
+A node which is set to "Ignore" will have its contents ignored on the text output rendering. Therefore it serves the same purpose as commenting out lines of source code.
 ## Example
 This README is a typical example of NETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.
 
-![README.md NETE overview](/images/neteexample3.png)
+![README.md NETE overview](/images/neteexample4.png)
 ## Acknowledgements
 This project uses the following libraries in its operations:
 
 * **cJSON** by Dave Gamble, from https://github.com/DaveGamble/cJSON
 * **dynarray** from https://github.com/eignnx/dynarray
+
