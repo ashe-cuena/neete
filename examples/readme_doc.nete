@@ -7,8 +7,8 @@
 	"node_group":	[{
 			"x":	120,
 			"y":	120,
-			"width":	850,
-			"height":	490,
+			"width":	920,
+			"height":	510,
 			"next":	-1,
 			"previous":	-1,
 			"cont_head":	-1,
@@ -20,9 +20,10 @@
 			"head":	"# NETE",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	0
+			"node_id":	0,
+			"status":	0
 		}, {
-			"x":	160,
+			"x":	140,
 			"y":	10,
 			"width":	100,
 			"height":	20,
@@ -37,24 +38,26 @@
 			"head":	"## Introduction",
 			"tail":	"",
 			"real_code":	"Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.\n\nNETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. \n\n1. Drawing pictures on a screen,\n2. Mathematical nodes and arcs.\n\nThe entire proposition is carried by the two elements i.e. node and arc, and how these are creatively combined to produce the intended output in a project.",
-			"node_id":	1
+			"node_id":	1,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	170,
-			"width":	610,
-			"height":	220,
+			"width":	740,
+			"height":	230,
 			"next":	-1,
 			"previous":	-1,
 			"cont_head":	-1,
 			"cont_by":	0,
-			"contained":	[8, 3, 9],
+			"contained":	[8, 3, 9, 23],
 			"priority":	5,
 			"name":	"How it Works",
 			"description":	"",
 			"head":	"## How it Works",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	2
+			"node_id":	2,
+			"status":	0
 		}, {
 			"x":	10,
 			"y":	10,
@@ -71,7 +74,8 @@
 			"head":	"## Nodes",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	3
+			"node_id":	3,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	10,
@@ -88,7 +92,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"The nodes carry the bulk of the work in making all the magic happen. The same node is used in two scenarios:\n\n\n1. To carry text (where it's termed a codebox),\n2. To carry nodes (where it's termed a container).\n\n\nThe same one node does both jobs but in different scenarios. The determinant is whether or not it contains another node and this difference shows up during rendering.\n\nNodes also carry with them two other visible features, which are title and priority. A description field is included and this is more or less a comment feature with no real consequence on operations.",
-			"node_id":	4
+			"node_id":	4,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	70,
@@ -105,7 +110,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	5
+			"node_id":	5,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	10,
@@ -121,11 +127,12 @@
 			"description":	"",
 			"head":	"### Codebox - Head, Tail and Textbox",
 			"tail":	"",
-			"real_code":	"Codebox structure             |  Real CodeBox\n:-------------------------:|:-------------------------:\n![Codebox Structure](/images/codebox_struct.png) | ![Codebox Example](/images/codeboxwithcode2.png)\n\nOn the inside of a node there are three other important text fields, which are the head, tail and textbox. These are pertinent for the actual low level of operations and they form the basis of the text. Upon rendering a codebox, these elements are batched in the order:\n\n\n1. Head,\n2. Textbox,\n3. Tail.\n\n\nThe head and tail are very important for containers because they allow an operator to be bound to the contained nodes.\n\nThe head and tail can also be useful in helping maintain codebox scope, because they allow mandatory fields to be taken out of the core code at hand and be maintained separately. An example could be a ``for`` statement where the head would contain \n````javascript \n\t\tfor(i = 0; i < 10; i++) { \n  ```` \n  and the tail may have ``}`` then the body is in the textbox. That way the programmer can focus their attention better on the body without being distracted by the syntax of the ``for``.\n  \nThe textbox is meant to carry small manageable snippets of code. This is where the bulk of the text is carried in the project. The size of this snippet is up to the discretion of the programmer. The idea here being that it must be a simple enough section to read through and understand in a short space of time.",
-			"node_id":	6
+			"real_code":	"Codebox structure             |  Real CodeBox\n:-------------------------:|:-------------------------:\n![Codebox Structure](/images/codebox_struct3.png) | ![Codebox Example](/images/codeboxwithcode3.png)\n\nOn the inside of a node there are three other important text fields, which are the head, tail and textbox. These are pertinent for the actual low level of operations and they form the basis of the text. Upon rendering a codebox, these elements are batched in the order:\n\n\n1. Head,\n2. Textbox,\n3. Tail.\n\n\nThe head and tail are very important for containers because they allow an operator to be bound to the contained nodes.\n\nThe head and tail can also be useful in helping maintain codebox scope, because they allow mandatory fields to be taken out of the core code at hand and be maintained separately. An example could be a ``for`` statement where the head would contain \n````javascript \n\t\tfor(i = 0; i < 10; i++) { \n  ```` \n  and the tail may have ``}`` then the body is in the textbox. That way the programmer can focus their attention better on the body without being distracted by the syntax of the ``for``.\n  \nThe textbox is meant to carry small manageable snippets of code. This is where the bulk of the text is carried in the project. The size of this snippet is up to the discretion of the programmer. The idea here being that it must be a simple enough section to read through and understand in a short space of time.",
+			"node_id":	6,
+			"status":	0
 		}, {
 			"x":	20,
-			"y":	60,
+			"y":	80,
 			"width":	100,
 			"height":	20,
 			"next":	-1,
@@ -139,11 +146,12 @@
 			"head":	"### Container",
 			"tail":	"",
 			"real_code":	"In the case of a container, every aspect of the codebox applies, except that the textbox is ignored. This is because the role of the textbox is taken by the contained nodes and these contained nodes are rendered recursively to eventually produce the contained text.\n\nContainers may act as passive holders of nodes purely for logical grouping or they can apply an operator to those nodes that they contain. An example of such could be a ``for`` loop, a ``while`` operator, an ``if`` statement, e.t.c. This comes about because the head and tail give containers the ability to hold scope over the nodes that they contain.",
-			"node_id":	7
+			"node_id":	7,
+			"status":	0
 		}, {
-			"x":	200,
-			"y":	60,
-			"width":	100,
+			"x":	190,
+			"y":	80,
+			"width":	90,
 			"height":	20,
 			"next":	9,
 			"previous":	3,
@@ -156,13 +164,14 @@
 			"head":	"## Arcs",
 			"tail":	"",
 			"real_code":	"![Nodes joined by arcs](/images/nodesfollowing2.png)\n\nThe arc is present to allow a follow sequence to be determined and it outputs from the right of a node and inputs into the left of the follower.",
-			"node_id":	8
+			"node_id":	8,
+			"status":	0
 		}, {
-			"x":	330,
+			"x":	310,
 			"y":	20,
 			"width":	260,
 			"height":	160,
-			"next":	-1,
+			"next":	23,
 			"previous":	8,
 			"cont_head":	-1,
 			"cont_by":	2,
@@ -173,7 +182,8 @@
 			"head":	"## Putting it Together",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	9
+			"node_id":	9,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	10,
@@ -190,7 +200,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"\n![Nodes of different priorities in a container](/images/nodesandcontainer2.png)\n\nThe relationship between codeboxes, containers and arcs then comes together during rendering. Here a few simple rules determine the outcome. Text in the output comes from three sources, which are:\n\n\n1. Heads,\n2. Textboxes,\n3. Tails.\n",
-			"node_id":	10
+			"node_id":	10,
+			"status":	0
 		}, {
 			"x":	140,
 			"y":	10,
@@ -207,7 +218,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"\nWhen the system renders a node, it begins with the head. Then depending on whether it's a codebox or a container it will render the textbox or the contained nodes recursively and lastly renders the tail.",
-			"node_id":	11
+			"node_id":	11,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	60,
@@ -224,7 +236,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"In order to render a node it has to pick the node and have a reason to move to the next node. Everything starts from the first node. The first node is found at the highest level of nodes i.e. nodes which are not contained by any other nodes. Nodes at any equal level in a container are then ordered by priority and ordered by followings (i.e. arcs).",
-			"node_id":	12
+			"node_id":	12,
+			"status":	0
 		}, {
 			"x":	140,
 			"y":	60,
@@ -241,7 +254,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"\n![Nodes set to show the colour coded priorities](/images/colour_codes2.png)\n\nThe nodes may have 10 priorities as shown in the figure, so this feature must be used sparingly. Priority 0 is the highest and 9 is the lowest. With nodes at the same level the highest priority is rendered first and the lowest is rendered last. The priority is visible as a colour code on the frame of the node. Nodes which have the same priority, at the same level of a container can be considered to be picked in random order(useful for parallel thinking).",
-			"node_id":	13
+			"node_id":	13,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	110,
@@ -258,7 +272,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"\nArc following is the other rule which determines ordering or rendering. Here the system will follow the arcs in its path.",
-			"node_id":	14
+			"node_id":	14,
+			"status":	0
 		}, {
 			"x":	140,
 			"y":	110,
@@ -275,7 +290,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"Using this simple set of rules, the system will stitch together all the text contained in the nodes and give out a rendered text file to be used as desired. ",
-			"node_id":	15
+			"node_id":	15,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	20,
@@ -292,7 +308,8 @@
 			"head":	"## How to Run it",
 			"tail":	"",
 			"real_code":	"So far this progam has been tested on Linux x86 and Raspberry Pi. The code requires GTK3, libgtksourceview and some other few packages to compile. I acquired them with the command:\n````\nsudo apt-get install build-essential libgtk-3-dev libgtksourceview-3.0-dev\n````\nThen compile the source by running:\n````\nmake\n````\nThen the program can be run with the command:\n````\n./nete_exec\n````",
-			"node_id":	16
+			"node_id":	16,
+			"status":	0
 		}, {
 			"x":	150,
 			"y":	20,
@@ -309,7 +326,8 @@
 			"head":	"## Quick Start",
 			"tail":	"",
 			"real_code":	"When the program starts it has a very simple interface which has a toolbar and a canvas.\n\n![Interface on start](/images/typicalinterface.png)\n\nThe toolbar has an entry box for finding line numbers and three radio buttons for the editing mode, which are: ``Move``, ``Contain`` and ``Link``.\n\n* ``Move`` allows the nodes to be moved and resized. Moving is done by dragging the name tag. Resizing is achieved by dragging the square shaped resize grip on the bottom right corner.\n* ``Contain`` allows nodes to be put into containers. This is done by clicking the name tag of the node to move. At this point the name tag should take on a blue background. Then the next step is to select a point in the body of the destination node.\n* ``Link`` will connect to nodes with an arc. This is done by clicking in the body of the first node. The name tag will be highlighted in blue, then click in the body of the node to follow. An arc should appear linking the two. Removing an  arc is the same process on already connected nodes.\n\n![A selected node](/images/nodehighlight.png)\n\nDouble clicking the name tag opens a window in which details of that node can be edited.\n\nNew nodes can be created by right clicking at a desired location in the canvas and selecting **New Node**. Nodes created in the body of another node are automatically contained by that node.\n\nNodes can be copied and pasted simply by right clicking on the name tag and selecting **Copy**, then right clicking on an intended destination and selecting **Paste**. A node is copied along with all the other contents it carries.\n\nBy default, output text is written to the file **nete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.\n\nWhenever the text represented by NETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.",
-			"node_id":	17
+			"node_id":	17,
+			"status":	0
 		}, {
 			"x":	20,
 			"y":	60,
@@ -326,9 +344,10 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	18
+			"node_id":	18,
+			"status":	0
 		}, {
-			"x":	240,
+			"x":	310,
 			"y":	440,
 			"width":	100,
 			"height":	20,
@@ -343,10 +362,11 @@
 			"head":	"## Acknowledgements",
 			"tail":	"",
 			"real_code":	"This project uses the following libraries in its operations:\n\n* **cJSON** by Dave Gamble, from https://github.com/DaveGamble/cJSON\n* **dynarray** from https://github.com/eignnx/dynarray",
-			"node_id":	19
+			"node_id":	19,
+			"status":	0
 		}, {
-			"x":	660,
-			"y":	170,
+			"x":	770,
+			"y":	190,
 			"width":	130,
 			"height":	40,
 			"next":	-1,
@@ -359,10 +379,11 @@
 			"description":	"",
 			"head":	"## Example",
 			"tail":	"",
-			"real_code":	"This README is a typical example of NETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.\n\n![README.md NETE overview](/images/neteexample3.png)",
-			"node_id":	20
+			"real_code":	"This README is a typical example of NETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.\n\n![README.md NETE overview](/images/neteexample4.png)",
+			"node_id":	20,
+			"status":	0
 		}, {
-			"x":	30,
+			"x":	20,
 			"y":	10,
 			"width":	100,
 			"height":	20,
@@ -377,7 +398,8 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"![NETE logo](/images/nete_logo.png)",
-			"node_id":	21
+			"node_id":	21,
+			"status":	0
 		}, {
 			"x":	1270,
 			"y":	580,
@@ -394,6 +416,61 @@
 			"head":	"",
 			"tail":	"",
 			"real_code":	"",
-			"node_id":	22
+			"node_id":	22,
+			"status":	0
+		}, {
+			"x":	600,
+			"y":	20,
+			"width":	110,
+			"height":	90,
+			"next":	-1,
+			"previous":	9,
+			"cont_head":	-1,
+			"cont_by":	2,
+			"contained":	[24, 25],
+			"priority":	5,
+			"name":	"Focus and Ignore",
+			"description":	"",
+			"head":	"## Focus and Ignore",
+			"tail":	"",
+			"real_code":	"",
+			"node_id":	23,
+			"status":	0
+		}, {
+			"x":	20,
+			"y":	10,
+			"width":	100,
+			"height":	20,
+			"next":	25,
+			"previous":	-1,
+			"cont_head":	-1,
+			"cont_by":	23,
+			"contained":	[],
+			"priority":	5,
+			"name":	"Focus",
+			"description":	"",
+			"head":	"### Focus",
+			"tail":	"",
+			"real_code":	"This is a function that is used on containers to have elements contained in a selected node being the only visible ones on the screen, thus putting them in focus. It is useful whenever attention needs to be placed on a particular container. \n\n\nDifferent Sizes             |  Focus Node\n:-------------------------:|:-------------------------:\n![Different Size Nodes](/images/three_size_node2.png) | ![Node in Focus](/images/focus_node2.png)\n\n\n\n\nA situation though where \"Focus\" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.\n\nThis feature allows the user to drill into deeper and deeper detail as and where necessary allowing control over the amount of attention needed in different scenarios. ",
+			"node_id":	24,
+			"status":	0
+		}, {
+			"x":	30,
+			"y":	60,
+			"width":	100,
+			"height":	20,
+			"next":	-1,
+			"previous":	24,
+			"cont_head":	-1,
+			"cont_by":	23,
+			"contained":	[],
+			"priority":	5,
+			"name":	"Ignore",
+			"description":	"",
+			"head":	"### Ignore",
+			"tail":	"",
+			"real_code":	"\"Ignore\" is a tick box that can be selected on any node, be it a container or a codebox. Once selected, the node will be struck out visually with an \"X\" as below. \n\n![Node to ignore](/images/ignore_node.png)\n\nA node which is set to \"Ignore\" will have its contents ignored on the text output rendering. Therefore it serves the same purpose as commenting out lines of source code.",
+			"node_id":	25,
+			"status":	0
 		}]
 }
