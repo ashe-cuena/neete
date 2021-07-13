@@ -164,6 +164,42 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
+                      <object class="GtkMenuItem" id="mnu_move_item">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Move Node</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_mnu_move_item_activate" swapped="no"/>
+                        <accelerator key="m" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="mnu_contain_item">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Recontain Node</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_mnu_contain_item_activate" swapped="no"/>
+                        <accelerator key="k" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="mnu_link_item">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Link/Unlink Nodes</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="on_mnu_link_item_activate" swapped="no"/>
+                        <accelerator key="l" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkMenuItem" id="mnu_findline_item">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -400,7 +436,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_right">4</property>
-                <property name="width_chars">6</property>
+                <property name="width_chars">9</property>
                 <property name="max_width_chars">5</property>
                 <property name="xalign">1</property>
                 <property name="input_purpose">number</property>
@@ -414,7 +450,7 @@
             </child>
             <child>
               <object class="GtkButton" id="btn_line_submit">
-                <property name="label" translatable="yes">Line</property>
+                <property name="label" translatable="yes">Line Search</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -614,8 +650,8 @@
     <property name="deletable">False</property>
     <property name="transient_for">window</property>
     <property name="program_name">New Era Text Editor</property>
-    <property name="version">1.19</property>
-    <property name="copyright" translatable="yes">(c) 2020 Tinashe Gwena</property>
+    <property name="version">1.20</property>
+    <property name="copyright" translatable="yes">(c) 2021 Tinashe Gwena</property>
     <property name="logo">res/nete_logo.png</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
     <signal name="response" handler="on_dlg_about_response" swapped="no"/>
@@ -777,7 +813,7 @@
     <property name="message_type">warning</property>
     <property name="buttons">yes-no</property>
     <property name="text" translatable="yes">There are unsaved changes.
-Confirm continue ? </property>
+ Continue with quitting? </property>
     <signal name="close" handler="on_msg_file_save_warn_close" swapped="no"/>
     <signal name="delete-event" handler="on_msg_file_save_warn_delete_event" swapped="no"/>
     <signal name="response" handler="on_msg_file_save_warn_response" swapped="no"/>
