@@ -651,8 +651,9 @@
     <property name="transient_for">window</property>
     <property name="program_name">New Era Text Editor</property>
     <property name="version">1.20</property>
-    <property name="copyright" translatable="yes">(c) 2021 Tinashe Gwena</property>
+    <property name="copyright" translatable="yes">(C) 2021 Tinashe Gwena</property>
     <property name="logo">res/nete_logo.png</property>
+    <property name="license_type">gpl-2-0</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
     <signal name="response" handler="on_dlg_about_response" swapped="no"/>
     <child>
