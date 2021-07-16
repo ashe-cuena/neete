@@ -245,12 +245,23 @@
                       <object class="GtkMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Language</property>
+                        <property name="label" translatable="yes">Highlighting</property>
                         <property name="use_underline">True</property>
                         <child type="submenu">
                           <object class="GtkMenu">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkRadioMenuItem" id="rbtn_plain_text">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Plain Text</property>
+                                <property name="use_underline">True</property>
+                                <property name="draw_as_radio">True</property>
+                                <property name="group">rbtn_c_cpp</property>
+                                <signal name="toggled" handler="on_rbtn_language_toggled" swapped="no"/>
+                              </object>
+                            </child>
                             <child>
                               <object class="GtkRadioMenuItem" id="rbtn_c_cpp">
                                 <property name="visible">True</property>
@@ -331,17 +342,6 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Verilog</property>
-                                <property name="use_underline">True</property>
-                                <property name="draw_as_radio">True</property>
-                                <property name="group">rbtn_c_cpp</property>
-                                <signal name="toggled" handler="on_rbtn_language_toggled" swapped="no"/>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkRadioMenuItem" id="rbtn_plain_text">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Plain Text</property>
                                 <property name="use_underline">True</property>
                                 <property name="draw_as_radio">True</property>
                                 <property name="group">rbtn_c_cpp</property>
@@ -650,7 +650,7 @@
     <property name="deletable">False</property>
     <property name="transient_for">window</property>
     <property name="program_name">New Era Text Editor</property>
-    <property name="version">1.20</property>
+    <property name="version">1.21</property>
     <property name="copyright" translatable="yes">(C) 2021 Tinashe Gwena</property>
     <property name="logo">res/nete_logo.png</property>
     <property name="license_type">gpl-2-0</property>
