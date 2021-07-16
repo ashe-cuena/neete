@@ -18,7 +18,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -158,8 +157,6 @@ typedef struct {
     float scaleFactor;
 } a_container_pos;
 typedef struct {
-//GtkWidget *menu_popup;
-//GtkWidget *w_txtvw_main;            // Pointer to text view object
     GtkWidget *w_dlg_file_choose;       // Pointer to file chooser dialog box
     GtkWidget *w_dlg_file_save;       // Pointer to file save dialog box
 //GtkTextBuffer *textbuffer_main;     // Pointer to text buffer
@@ -254,6 +251,8 @@ typedef struct {
     focus_item *focusList;
     double scroll_x;
     double scroll_y;
+    GtkWidget *current_highlight_button;
+    bool line_wrapping;
 } a_node_group_context;
 RGB colorConverter(int hexValue);
 void redraw(cairo_t *cr) ;
@@ -426,6 +425,7 @@ gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event,
 
             doMouseDown2((guint)event->x, (guint)event->y, data);
         }
+
         return TRUE;
     }
 
@@ -494,6 +494,7 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     if(node_being_edited != -1 && node_group_being_edited != -1) {
         gtk_text_buffer_get_start_iter (app_wdgts->e_txt_codebox_code, &start);
         gtk_text_buffer_get_end_iter (app_wdgts->e_txt_codebox_code, &end);
+
 
         name = gtk_entry_get_text (app_wdgts->e_txt_codebox_name);
         description = gtk_entry_get_text (app_wdgts->e_txt_codebox_description);
@@ -647,7 +648,6 @@ int nete_paste_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea
 
     check_obscuring(pastedNodeZone.node);
     check_obscured(pastedNodeZone.node);
-//        redraw();
     gtk_widget_queue_draw(ddarea);
     deactivate_quit();
 
@@ -656,6 +656,7 @@ int nete_paste_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea
     return 0;
 }
 int nete_focus_node(__attribute__((unused)) GtkWidget *widget, app_widgets *app_wdgts) {
+
     mousePressed = false;
     focus_item temp_focus_item;
     int* primary_nodes;
@@ -696,10 +697,8 @@ int nete_restore_all(__attribute__((unused)) GtkWidget *widget, app_widgets *app
     if(dynarray_length(current_nodegroup.focusList) > 0) {
         scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
         scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
-
         dynarray_pop(current_nodegroup.focusList, &temp_focus_item);
         current_nodegroup.topNode = temp_focus_item.node;
-
         gtk_adjustment_set_value (scrollx, temp_focus_item.scroll_x);
         gtk_adjustment_set_value (scrolly, temp_focus_item.scroll_y);
 
@@ -779,6 +778,7 @@ void on_mnu_item_open_activate(__attribute__((unused)) GtkMenuItem *menuitem, ap
     gchar *file_name = NULL;        // Name of file to open from dialog box
     gchar *file_contents = NULL;    // For reading contents of file
     gboolean file_success = FALSE;  // File read status
+//GtkFileFilter *filter;
 
     char *last_slash;
 
@@ -794,12 +794,9 @@ void on_mnu_item_open_activate(__attribute__((unused)) GtkMenuItem *menuitem, ap
         file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose));
         if (file_name != NULL) {
             load_codeBox_file(file_name, app_wdgts);
-
         }
         g_free(file_name);
     }
-//gtk_file_chooser_remove_filter (GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose), app_wdgts->netefilter);
-// Finished with the "Open Text File" dialog box, so hide it
     gtk_widget_hide(app_wdgts->w_dlg_file_choose);
 }
 void on_mnu_item_save_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -819,7 +816,7 @@ void on_mnu_item_render_activate(__attribute__((unused)) GtkMenuItem *menuitem, 
 
     string_set(&output_text, "");
     clearRenderedData();
-//renderData();
+
     renderDataNodes(primary_nodes, false);
 
     fp = fopen(current_nodegroup.destination, "w");
@@ -865,7 +862,6 @@ void on_mnu_item_close_activate(__attribute__((unused)) GtkMenuItem *menuitem, a
     } else {
         remove_nodegroup(app_wdgts);
     }
-
 }
 void on_mnu_open_session_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
     gchar *file_name = NULL;        // Name of file to open from dialog box
@@ -886,16 +882,11 @@ void on_mnu_open_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
             if (file_success) {
 
                 load_session(file_contents, app_wdgts);
-
             }
             g_free(file_contents);
-
-
         }
         g_free(file_name);
     }
-//gtk_file_chooser_remove_filter(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose), app_wdgts->sessionfilter);
-// Finished with the "Open Text File" dialog box, so hide it
     gtk_widget_hide(app_wdgts->w_dlg_file_choose);
 }
 void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -923,6 +914,7 @@ void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
         string_set(&output_filename, file_name);
 
         if(strncmp(".prj", (file_name + strlen(file_name) - 4), 4) == 0) {
+            printf("session file\n");
         } else {
             string_add(&output_filename, ".prj");
         }
@@ -932,8 +924,8 @@ void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
         string_init(&tab_name);
         string_set(&tab_name, last_slash + 1);
 
-
         // ======== then the name and filename
+
         write_to_file = true;
 
         string_free(&tab_name) ;
@@ -948,7 +940,6 @@ void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
         fp = fopen(output_filename, "w");
 
         string_session = stringify_session();
-        printf("output session -> \n\n%s\n", string_session);
         fputs(string_session, fp);
         fclose(fp);
 
@@ -968,8 +959,10 @@ void on_cmnu_wrap_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app_wdg
 
     if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->b_mnu_wrap))) {
         gtk_text_view_set_wrap_mode (app_wdgts->s_source_view, GTK_WRAP_WORD_CHAR);
+        current_nodegroup.line_wrapping = true;
     } else {
         gtk_text_view_set_wrap_mode(app_wdgts->s_source_view, GTK_WRAP_NONE);
+        current_nodegroup.line_wrapping = false;
     }
 }
 void on_rbtn_language_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app_wdgts, gpointer user_data) {
@@ -979,38 +972,47 @@ void on_rbtn_language_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app
     if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_c_cpp))) {
         language = gtk_source_language_manager_get_language(manager, "c");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_c_cpp;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_html))) {
         language = gtk_source_language_manager_get_language(manager, "html");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_html;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_java))) {
         language = gtk_source_language_manager_get_language(manager, "java");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_java;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_javascript))) {
         language = gtk_source_language_manager_get_language(manager, "js");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_javascript;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_latex))) {
         language = gtk_source_language_manager_get_language(manager, "latex");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_latex;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_php))) {
         language = gtk_source_language_manager_get_language(manager, "php");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_php;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_python))) {
         language = gtk_source_language_manager_get_language(manager, "python");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_python;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_verilog))) {
         language = gtk_source_language_manager_get_language(manager, "verilog");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_verilog;
     }
     else if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(app_wdgts->language_buttons.b_rbtn_plain_text))) {
         language = gtk_source_language_manager_get_language(manager, "text");
         gtk_source_buffer_set_language(app_wdgts->e_txt_codebox_code, language);
+        current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_plain_text;
     }
 }
 void on_mnu_zoom_in_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -1026,7 +1028,6 @@ void on_mnu_zoom_normal_activate(__attribute__((unused)) GtkMenuItem *menuitem, 
     gtk_widget_queue_draw( app_wdgts->drawingArea);
 }
 void on_mnu_findline_item_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
-    printf("find line\n");
     gtk_entry_grab_focus_without_selecting(app_wdgts->e_txt_search_line);
 }
 void on_btn_options_submit_clicked(__attribute__((unused)) GtkButton *widget, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
@@ -1562,6 +1563,7 @@ void drawNode(cairo_t *cr, int node, int frame_x, int frame_y, __attribute__((un
     header_len = strlen(name);
 
     for(i = 0; i < header_text_num_positions; i++) {
+
         memcpy( &single_row[0], &name[head_text_position], header_text_positions[i] - head_text_position);
         single_row[header_text_positions[i] - head_text_position] = '\0';
 
@@ -1798,7 +1800,6 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
         row_len = ceil(((float)max_width/(float)total_width) * len);
         num_rows = ceil((float)total_width/(float)max_width);
         position = 0;
-
         header_valid = true;
         while(header_valid) {
             current_position = position;
@@ -1806,7 +1807,6 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
             row_width = 0;
 
             while(row_width < max_width) {
-
                 last_position = current_position;
                 if(end_pending) {
                     header_valid = false;
@@ -1852,6 +1852,7 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
                 single_row[len - position] = '\0';
                 position = len;
             }
+
             cairo_scaled_font_text_extents (cairo_get_scaled_font(cr), single_row, &my_font_extents);
             temp_width = my_font_extents.width;
             if(temp_width > max_pixel_width) {
@@ -2220,6 +2221,7 @@ void launchBox(int node, int line_start, app_widgets *app_wdgts) {
 
     gtk_entry_set_text (app_wdgts->e_txt_codebox_name, current_nodegroup.node_group[node].name);
     gtk_entry_set_text (app_wdgts->e_txt_codebox_description, current_nodegroup.node_group[node].description);
+
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (app_wdgts->b_chkbtn_codebox_ignore), FALSE);
     if(current_nodegroup.node_group[node].status == 1) {
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (app_wdgts->b_chkbtn_codebox_ignore), TRUE);
@@ -2933,6 +2935,9 @@ void init_node_group_context(a_node_group_context *temp_group_list) {
     temp_group_list->node_group = dynarray_create(a_node);
 
     temp_group_list->focusList = dynarray_create(focus_item);
+
+    temp_group_list->current_highlight_button = NULL;
+    temp_group_list->line_wrapping = false;
 }
 void delete_group_context(a_node_group_context *temp_group_list) {
     int i;
@@ -3168,7 +3173,6 @@ char* stringify_nodes(void) {
 end:
     cJSON_Delete(output_code);
     return string;
-
 }
 void write_to_file(app_widgets *app_wdgts) {
     gchar *file_name = NULL;
@@ -3188,7 +3192,6 @@ void write_to_file(app_widgets *app_wdgts) {
 
     string_init(&output_filename);
     string_init(&temp_untitled_name);
-
 
     if (strlen(current_nodegroup.fileName) > 5 && !(current_nodegroup.fileSaveAsMode)) {
         string_set(&output_filename, current_nodegroup.fileName);
@@ -3359,7 +3362,6 @@ void load_session(char *nete_string, app_widgets *app_wdgts) {
         }
     }
 
-
     cJSON_Delete(nete_json);
 }
 char* stringify_session(void) {
@@ -3377,9 +3379,6 @@ char* stringify_session(void) {
     size_t index = 0;
     unsigned long int i = 0;
 
-
-
-
     output_node_group = cJSON_CreateArray();
     if (output_node_group == NULL)
     {
@@ -3395,6 +3394,7 @@ char* stringify_session(void) {
             {
                 goto end;
             }
+
             cJSON_AddItemToArray(output_node_group, output_code);
 
             json_add_string(name, codeBox_list[index].name, output_code, end);
@@ -3404,9 +3404,9 @@ char* stringify_session(void) {
             json_add_number(zoomScaleFactor, codeBox_list[index].zoomScaleFactor, output_code, end);
 
         }
-
     }
     string = cJSON_Print(output_node_group);
+
     if (string == NULL)
     {
         fprintf(stderr, "Failed to print output_code.\n");
@@ -3610,6 +3610,7 @@ void remove_nodegroup(app_widgets *app_wdgts) {
             codeBox_list[i] = codeBox_list[i + 1];
             i++;
         }
+        //codeBox_list[array_length - 1] = temp_item2;
         if(array_length > 0) {
             dynarray_pop(codeBox_list, &temp_item);
         }
@@ -3619,7 +3620,6 @@ void remove_nodegroup(app_widgets *app_wdgts) {
 
         gtk_notebook_remove_page (app_wdgts->t_ntb_nete_tabs, index_to_splice);
     }
-
 }
 void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     int old_nodegroup_id;
@@ -3644,7 +3644,6 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     gtk_adjustment_set_value (scrollx, current_nodegroup.scroll_x);
     gtk_adjustment_set_value (scrolly, current_nodegroup.scroll_y);
 
-
     no_node_selected = true;
     g_object_ref(app_wdgts->l_lbl_codebox_focus);
     g_object_ref(app_wdgts->w_darea_scroll);
@@ -3653,5 +3652,15 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     gtk_container_add (current_nodegroup.codebox_container, app_wdgts->l_lbl_codebox_focus);
     gtk_container_add (current_nodegroup.codebox_container, app_wdgts->w_darea_scroll);
 
+    if(current_nodegroup.current_highlight_button != NULL) {
+        gtk_check_menu_item_set_active (current_nodegroup.current_highlight_button, TRUE);
+    }
+
+    if(current_nodegroup.line_wrapping) {
+        gtk_check_menu_item_set_active (app_wdgts->b_mnu_wrap, TRUE);
+    } else {
+        gtk_check_menu_item_set_active (app_wdgts->b_mnu_wrap, FALSE);
+
+    }
 }
 
