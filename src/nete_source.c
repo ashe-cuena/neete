@@ -2539,7 +2539,7 @@ bool join_nodes(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZone) {
     if (firstNodeZone->zone == 0 || firstNodeZone->zone == 1 || firstNodeZone->zone == 2 || firstNodeZone->zone == 3) {
         if (firstNodeZone->node != current_nodegroup.topNode && (secondNodeZone->zone == 0 || secondNodeZone->zone == 1 || secondNodeZone->zone == 2 || secondNodeZone->zone == 3) && secondNodeZone->node != firstNodeZone->node) {
             if(current_nodegroup.node_group[firstNodeZone->node].cont_by == current_nodegroup.node_group[secondNodeZone->node].cont_by ) {
-                if(current_nodegroup.node_group[firstNodeZone->node].next == -1 && current_nodegroup.node_group[secondNodeZone->node].previous == -1) {
+                if(current_nodegroup.node_group[firstNodeZone->node].next == -1 && current_nodegroup.node_group[secondNodeZone->node].previous == -1 && check_not_circular(firstNodeZone->node, secondNodeZone->node)) {
                     current_nodegroup.node_group[firstNodeZone->node].next = secondNodeZone->node;
                     current_nodegroup.node_group[secondNodeZone->node].previous = firstNodeZone->node;
                 } else if (current_nodegroup.node_group[firstNodeZone->node].next == secondNodeZone->node) {
