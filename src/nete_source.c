@@ -17,7 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
@@ -27,10 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <time.h>
 #include <glib.h>
-
 #include "cJSON.h"
-
 #include "dynarray.h"
+
 #define json_add_number(id, num, dest, label)		id = cJSON_CreateNumber(num); \
         if (id == NULL) 	\
             {           	\
@@ -175,7 +173,6 @@ typedef struct {
     GtkNotebook	*t_ntb_nete_tabs;
     GtkWidget	*w_darea_scroll;
     GtkLabel 	*l_lbl_codebox_focus;
-//GtkWidget *
 
 //------------------------------------
 //  options window
@@ -384,7 +381,6 @@ int node_text_height = 15;
 int node_text_size = 12;
 int node_flank_width = 15;
 int node_resize_width = 15;
-//int node_to_copy = 0;
 bool copyNode = false;
 a_translate_vector *node_translation;
 
@@ -408,7 +404,6 @@ gint on_ntb_nete_tabs_switch_page(__attribute__((unused)) GtkButton *widget, __a
     return TRUE;
 }
 gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event, app_widgets *app_wdgts, gpointer data) {
-//GtkAdjustment *scrollx;
     const guint RIGHT_CLICK = 3;
 
     if (event->type == GDK_BUTTON_PRESS) {
@@ -2541,8 +2536,8 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
     return true;
 }
 bool join_nodes(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZone) {
-    if (firstNodeZone->zone == 1 || firstNodeZone->zone == 2 || firstNodeZone->zone == 3) {
-        if (firstNodeZone->node != current_nodegroup.topNode && (secondNodeZone->zone == 1 || secondNodeZone->zone == 2 || secondNodeZone->zone == 3) && secondNodeZone->node != firstNodeZone->node) {
+    if (firstNodeZone->zone == 0 || firstNodeZone->zone == 1 || firstNodeZone->zone == 2 || firstNodeZone->zone == 3) {
+        if (firstNodeZone->node != current_nodegroup.topNode && (secondNodeZone->zone == 0 || secondNodeZone->zone == 1 || secondNodeZone->zone == 2 || secondNodeZone->zone == 3) && secondNodeZone->node != firstNodeZone->node) {
             if(current_nodegroup.node_group[firstNodeZone->node].cont_by == current_nodegroup.node_group[secondNodeZone->node].cont_by ) {
                 if(current_nodegroup.node_group[firstNodeZone->node].next == -1 && current_nodegroup.node_group[secondNodeZone->node].previous == -1) {
                     current_nodegroup.node_group[firstNodeZone->node].next = secondNodeZone->node;
@@ -3636,7 +3631,6 @@ void set_node_group(int new_group_index, app_widgets *app_wdgts) {
     } else {
         gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
     }
-
     scrollx = gtk_scrolled_window_get_hadjustment (app_wdgts->w_darea_scroll);
     scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->w_darea_scroll);
     codeBox_list[old_nodegroup_id].scroll_x = gtk_adjustment_get_value (scrollx);
