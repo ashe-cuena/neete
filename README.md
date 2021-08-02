@@ -20,7 +20,7 @@ make
 ````
 Then the program can be run with the command:
 ````
-./nete_exec
+./neete_exec
 ````
 ## Quick Start
 When the program starts it has a very simple interface which has a toolbar and a canvas.
