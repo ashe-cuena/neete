@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/org/nete">
-    <file compressed="true">ui/nete.gui</file>
-	<file>ui/res/nete_logo.png</file>
-	<file>ui/res/nete_icon.png</file>
+  <gresource prefix="/org/neete">
+    <file compressed="true">ui/neete.gui</file>
+	<file>ui/res/neete_logo.png</file>
+	<file>ui/res/neete_icon.png</file>
   </gresource>
 </gresources>
