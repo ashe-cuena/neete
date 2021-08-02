@@ -17,7 +17,7 @@
 			"priority":	5,
 			"name":	"Implementation",
 			"description":	"",
-			"head":	"# NETE",
+			"head":	"# NEETE",
 			"tail":	"",
 			"real_code":	"",
 			"node_id":	0,
@@ -37,7 +37,7 @@
 			"description":	"",
 			"head":	"## Introduction",
 			"tail":	"",
-			"real_code":	"Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.\n\nNETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. \n\n1. Drawing pictures on a screen,\n2. Mathematical nodes and arcs.\n\nThe entire proposition is carried by the two elements i.e. node and arc, and how these are creatively combined to produce the intended output in a project.",
+			"real_code":	"Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.\n\nNEETE, meaning Next Evolution Enhanced Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. \n\n1. Drawing pictures on a screen,\n2. Mathematical nodes and arcs.\n\nThe entire proposition is carried by the two elements i.e. node and arc, and how these are creatively combined to produce the intended output in a project.",
 			"node_id":	1,
 			"status":	0
 		}, {
@@ -307,7 +307,7 @@
 			"description":	"",
 			"head":	"## How to Run it",
 			"tail":	"",
-			"real_code":	"So far this progam has been tested on Linux x86 and Raspberry Pi. The code requires GTK3, libgtksourceview and some other few packages to compile. I acquired them with the command:\n````\nsudo apt-get install build-essential libgtk-3-dev libgtksourceview-3.0-dev\n````\nThen compile the source by running:\n````\nmake\n````\nThen the program can be run with the command:\n````\n./nete_exec\n````",
+			"real_code":	"So far this progam has been tested on Linux x86 and Raspberry Pi. The code requires GTK3, libgtksourceview and some other few packages to compile. I acquired them with the command:\n````\nsudo apt-get install build-essential libgtk-3-dev libgtksourceview-3.0-dev\n````\nThen compile the source by running:\n````\nmake\n````\nThen the program can be run with the command:\n````\n./neete_exec\n````",
 			"node_id":	16,
 			"status":	0
 		}, {
@@ -325,7 +325,7 @@
 			"description":	"",
 			"head":	"## Quick Start",
 			"tail":	"",
-			"real_code":	"When the program starts it has a very simple interface which has a toolbar and a canvas.\n\n![Interface on start](/images/typicalinterface.png)\n\nThe toolbar has an entry box for finding line numbers and three radio buttons for the editing mode, which are: ``Move``, ``Contain`` and ``Link``.\n\n* ``Move`` allows the nodes to be moved and resized. Moving is done by dragging the name tag. Resizing is achieved by dragging the square shaped resize grip on the bottom right corner.\n* ``Contain`` allows nodes to be put into containers. This is done by clicking the name tag of the node to move. At this point the name tag should take on a blue background. Then the next step is to select a point in the body of the destination node.\n* ``Link`` will connect to nodes with an arc. This is done by clicking in the body of the first node. The name tag will be highlighted in blue, then click in the body of the node to follow. An arc should appear linking the two. Removing an  arc is the same process on already connected nodes.\n\n![A selected node](/images/nodehighlight.png)\n\nDouble clicking the name tag opens a window in which details of that node can be edited.\n\nNew nodes can be created by right clicking at a desired location in the canvas and selecting **New Node**. Nodes created in the body of another node are automatically contained by that node.\n\nNodes can be copied and pasted simply by right clicking on the name tag and selecting **Copy**, then right clicking on an intended destination and selecting **Paste**. A node is copied along with all the other contents it carries.\n\nBy default, output text is written to the file **nete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.\n\nWhenever the text represented by NETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.",
+			"real_code":	"When the program starts it has a very simple interface which has a toolbar and a canvas.\n\n![Interface on start](/images/typicalinterface.png)\n\nThe toolbar has an entry box for finding line numbers and three radio buttons for the editing mode, which are: ``Move``, ``Contain`` and ``Link``.\n\n* ``Move`` allows the nodes to be moved and resized. Moving is done by dragging the name tag. Resizing is achieved by dragging the square shaped resize grip on the bottom right corner.\n* ``Contain`` allows nodes to be put into containers. This is done by clicking the name tag of the node to move. At this point the name tag should take on a blue background. Then the next step is to select a point in the body of the destination node.\n* ``Link`` will connect to nodes with an arc. This is done by clicking in the body of the first node. The name tag will be highlighted in blue, then click in the body of the node to follow. An arc should appear linking the two. Removing an  arc is the same process on already connected nodes.\n\n![A selected node](/images/nodehighlight.png)\n\nDouble clicking the name tag opens a window in which details of that node can be edited.\n\nNew nodes can be created by right clicking at a desired location in the canvas and selecting **New Node**. Nodes created in the body of another node are automatically contained by that node.\n\nNodes can be copied and pasted simply by right clicking on the name tag and selecting **Copy**, then right clicking on an intended destination and selecting **Paste**. A node is copied along with all the other contents it carries.\n\nBy default, output text is written to the file **neete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.\n\nWhenever the text represented by NEETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.",
 			"node_id":	17,
 			"status":	0
 		}, {
@@ -379,7 +379,7 @@
 			"description":	"",
 			"head":	"## Example",
 			"tail":	"",
-			"real_code":	"This README is a typical example of NETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.\n\n![README.md NETE overview](/images/neteexample4.png)",
+			"real_code":	"This README is a typical example of NEETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.\n\n![README.md NEETE overview](/images/neteexample4.png)",
 			"node_id":	20,
 			"status":	0
 		}, {
@@ -397,7 +397,7 @@
 			"description":	"",
 			"head":	"",
 			"tail":	"",
-			"real_code":	"![NETE logo](/images/nete_logo.png)",
+			"real_code":	"![NEETE logo](/images/neete_logo.png)",
 			"node_id":	21,
 			"status":	0
 		}, {
@@ -451,7 +451,7 @@
 			"description":	"",
 			"head":	"### Focus",
 			"tail":	"",
-			"real_code":	"This is a function that is used on containers to have elements contained in a selected node being the only visible ones on the screen, thus putting them in focus. It is useful whenever attention needs to be placed on a particular container. \n\n\nDifferent Sizes             |  Focus Node\n:-------------------------:|:-------------------------:\n![Different Size Nodes](/images/three_size_node2.png) | ![Node in Focus](/images/focus_node2.png)\n\n\n\n\nA situation though where \"Focus\" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.\n\nThis feature allows the user to drill into deeper and deeper detail as and where necessary allowing control over the amount of attention needed in different scenarios. ",
+			"real_code":	"This is a function that is used on containers to have elements contained in a selected node being the only visible ones on the screen, thus putting them in focus. It is useful whenever attention needs to be placed on a particular container. \n\n\nDifferent Sizes             |  Focus Node\n:-------------------------:|:-------------------------:\n![Different Size Nodes](/images/three_size_node2.png) | ![Node in Focus](/images/focus_node2.png)\n\n\n\n\nA situation though where \"Focus\" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NEETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.\n\nThis feature allows the user to drill into deeper and deeper detail as and where necessary allowing control over the amount of attention needed in different scenarios. ",
 			"node_id":	24,
 			"status":	0
 		}, {
