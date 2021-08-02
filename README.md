@@ -1,5 +1,5 @@
 # NEETE
-![NETE logo](/images/nete_logo.png)
+![NETE logo](/images/neete_logo.png)
 ## Introduction
 Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.
 
