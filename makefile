@@ -28,7 +28,7 @@ OBJS=    src/neete.o src/neete_resources.o src/cjson.o src/dynarray.o
 all: $(OBJS)
 	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-src/nete.o: src/neete_source.c
+src/neete.o: src/neete_source.c
 	$(CC) -c $(CCFLAGS) src/neete_source.c $(GTKLIB) -o src/neete.o
 
 src/cjson.o: src/cJSON.c
