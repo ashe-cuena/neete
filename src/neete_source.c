@@ -1205,8 +1205,8 @@ int main(int argc, char **argv)  {
 
     pango_attr_list_insert(attrlist, attr);
     builder = gtk_builder_new ();
-    if( gtk_builder_add_from_resource (builder,"/org/nete/ui/nete.gui",&error) == 0)
-//if( gtk_builder_add_from_file (builder,"ui/nete.gui" ,&error) == 0)
+    if( gtk_builder_add_from_resource (builder,"/org/neete/ui/neete.gui",&error) == 0)
+//if( gtk_builder_add_from_file (builder,"ui/neete.gui" ,&error) == 0)
     {
         printf("gtk_builder_add_from_file FAILED %s\n",error->message);
         return EXIT_FAILURE;
