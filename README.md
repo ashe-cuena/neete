@@ -41,7 +41,7 @@ New nodes can be created by right clicking at a desired location in the canvas a
 
 Nodes can be copied and pasted simply by right clicking on the name tag and selecting **Copy**, then right clicking on an intended destination and selecting **Paste**. A node is copied along with all the other contents it carries.
 
-By default, output text is written to the file **nete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.
+By default, output text is written to the file **neete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.
 
 Whenever the text represented by NEETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.
 ## How it Works
