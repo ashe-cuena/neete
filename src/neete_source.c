@@ -1,5 +1,5 @@
 /*
-New Era Text Editor (NETE), A Visual Diagrammatic Text Editor
+Next Evolution Enhanced Text Editor (NEETE), A Visual Diagrammatic Text Editor
 Copyright (C) 2021 Tinashe Gwena
 
 This program is free software; you can redistribute it and/or
