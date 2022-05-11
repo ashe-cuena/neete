@@ -79,10 +79,7 @@ The head and tail can also be useful in helping maintain codebox scope, because 
   
 The textbox is meant to carry small manageable snippets of code. This is where the bulk of the text is carried in the project. The size of this snippet is up to the discretion of the programmer. The idea here being that it must be a simple enough section to read through and understand in a short space of time.
 ### Container
-Containers behave mostly similarly to codeboxes. The differ-
-ence is that the textbox in a container will contain a continuous
-strip of the text from the contained nodes. These will be at-
-tached tip to tail in their rendering order.
+Containers behave mostly similarly to codeboxes. The difference is that the textbox in a container will contain a continuous strip of the text from the contained nodes. These will be attached tip to tail in their rendering order.
 
 Containers may act as passive holders of nodes purely for logical grouping or they can apply an operator to those nodes that they contain. An example of such could be a ``for`` loop, a ``while`` operator, an ``if`` statement, e.t.c. This comes about because the head and tail give containers the ability to hold scope over the nodes that they contain.
 ## Arcs
