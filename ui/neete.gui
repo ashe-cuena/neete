@@ -660,7 +660,7 @@
     <property name="transient_for">window</property>
     <property name="program_name">Next Evolution Enhanced Text Editor</property>
     <property name="version">2.01</property>
-    <property name="copyright" translatable="yes">(C) 2021 Tinashe Gwena</property>
+    <property name="copyright" translatable="yes">(C) 2022 Tinashe Gwena</property>
     <property name="logo">res/neete_logo.png</property>
     <property name="license_type">gpl-2-0</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
