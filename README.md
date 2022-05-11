@@ -1,9 +1,9 @@
-# NEETE
-![NETE logo](/images/neete_logo.png)
+# NETE
+![NETE logo](/images/nete_logo.png)
 ## Introduction
 Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.
 
-NEETE, meaning Next Evolution Enhanced Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
+NETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
 
 1. Drawing pictures on a screen,
 2. Mathematical nodes and arcs.
@@ -20,7 +20,7 @@ make
 ````
 Then the program can be run with the command:
 ````
-./neete_exec
+./nete_exec
 ````
 ## Quick Start
 When the program starts it has a very simple interface which has a toolbar and a canvas.
@@ -41,9 +41,9 @@ New nodes can be created by right clicking at a desired location in the canvas a
 
 Nodes can be copied and pasted simply by right clicking on the name tag and selecting **Copy**, then right clicking on an intended destination and selecting **Paste**. A node is copied along with all the other contents it carries.
 
-By default, output text is written to the file **neete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.
+By default, output text is written to the file **nete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.
 
-Whenever the text represented by NEETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.
+Whenever the text represented by NETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.
 ## How it Works
 ## Nodes
 The nodes carry the bulk of the work in making all the magic happen. The same node is used in two scenarios:
@@ -79,7 +79,10 @@ The head and tail can also be useful in helping maintain codebox scope, because 
   
 The textbox is meant to carry small manageable snippets of code. This is where the bulk of the text is carried in the project. The size of this snippet is up to the discretion of the programmer. The idea here being that it must be a simple enough section to read through and understand in a short space of time.
 ### Container
-In the case of a container, every aspect of the codebox applies, except that the textbox is ignored. This is because the role of the textbox is taken by the contained nodes and these contained nodes are rendered recursively to eventually produce the contained text.
+Containers behave mostly similarly to codeboxes. The differ-
+ence is that the textbox in a container will contain a continuous
+strip of the text from the contained nodes. These will be at-
+tached tip to tail in their rendering order.
 
 Containers may act as passive holders of nodes purely for logical grouping or they can apply an operator to those nodes that they contain. An example of such could be a ``for`` loop, a ``while`` operator, an ``if`` statement, e.t.c. This comes about because the head and tail give containers the ability to hold scope over the nodes that they contain.
 ## Arcs
@@ -119,7 +122,7 @@ Different Sizes             |  Focus Node
 
 
 
-A situation though where "Focus" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NEETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.
+A situation though where "Focus" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.
 
 This feature allows the user to drill into deeper and deeper detail as and where necessary allowing control over the amount of attention needed in different scenarios. 
 ### Ignore
@@ -129,9 +132,9 @@ This feature allows the user to drill into deeper and deeper detail as and where
 
 A node which is set to "Ignore" will have its contents ignored on the text output rendering. Therefore it serves the same purpose as commenting out lines of source code.
 ## Example
-This README is a typical example of NEETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.
+This README is a typical example of NETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.
 
-![README.md NEETE overview](/images/neteexample4.png)
+![README.md NETE overview](/images/neteexample4.png)
 ## Acknowledgements
 This project uses the following libraries in its operations:
 
