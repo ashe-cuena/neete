@@ -102,11 +102,12 @@ The relationship between codeboxes, containers and arcs then comes together duri
 
 
 When the system renders a node, it begins with the head. Then depending on whether it's a codebox or a container it will render the textbox or the contained nodes recursively and lastly renders the tail.
-In order to render a node it has to pick the node and have a reason to move to the next node. Everything starts from the first node. The first node is found at the highest level of nodes i.e. nodes which are not contained by any other nodes. Nodes at any equal level in a container are then ordered by priority and ordered by followings (i.e. arcs).
+In order to render a node it has to pick the node and have a reason to move to the next node. Everything starts from the first node. The first node is found at the highest level of nodes i.e. nodes which are not contained by any other nodes. Nodes at any equal level in a container are then ordered by priority, arcs or position.
 
 ![Nodes set to show the colour coded priorities](/images/colour_codes4.png)
 
-The nodes may have 10 priorities as shown in the figure, so this feature must be used sparingly. Priority 0 is the highest and 9 is the lowest. With nodes at the same level the highest priority is rendered first and the lowest is rendered last. The priority is visible as a colour code on the frame of the node. Nodes which have the same priority, at the same level of a container can be considered to be picked in random order(useful for parallel thinking).
+The nodes may have 10 priorities as shown in the figure, so this feature must be used sparingly. Priority 0 is the highest and 9 is the lowest. With nodes at the same level the highest priority is rendered first and the lowest is rendered last. The priority is visible as a colour code on the frame of the node. Nodes which have the same priority, at the same level of a container are picked by the order of their positioning
+i.e. from top left to bottom right similar to a raster scan.
 
 Arc following is the other rule which determines ordering or rendering. Here the system will follow the arcs in its path.
 Using this simple set of rules, the system will stitch together all the text contained in the nodes and give out a rendered text file to be used as desired. 
@@ -134,7 +135,7 @@ A node which is set to "Ignore" will have its contents ignored on the text outpu
 ## Example
 This README is a typical example of NEETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.
 
-![README.md NEETE overview](/images/neteexample4.png)
+![README.md NEETE overview](/images/neteexample5.png)
 ## Acknowledgements
 This project uses the following libraries in its operations:
 
