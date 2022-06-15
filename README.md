@@ -1,9 +1,9 @@
 # NETE
-![NETE logo](/images/nete_logo.png)
+![NETE logo](/images/neete_logo.png)
 ## Introduction
 Computer programs are normally written as plain text documents, usually as a long trail of lines from top to bottom. I think it would be a nice touch if an artistic dimension could be added to that code to enhance meaning.
 
-NETE, meaning New Era Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
+NEETE, meaning Next Evolution Enhanced Text Editor, is a way in which the programmer can embed a diagrammatic overview to the code and thus summarise the underlying operations better. It uses a graphical approach to creating and editing text. Graphical here is capturing two senses of the word i.e. 
 
 1. Drawing pictures on a screen,
 2. Mathematical nodes and arcs.
@@ -20,7 +20,7 @@ make
 ````
 Then the program can be run with the command:
 ````
-./nete_exec
+./neete_exec
 ````
 ## Quick Start
 When the program starts it has a very simple interface which has a toolbar and a canvas.
@@ -43,7 +43,7 @@ Nodes can be copied and pasted simply by right clicking on the name tag and sele
 
 By default, output text is written to the file **nete_out.txt**. This can be changed under **Edit** then **Option** on the top menu. A window with an entry box will appear where a complete path to a desired output file can be entered.
 
-Whenever the text represented by NETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.
+Whenever the text represented by NEETE is required, the output file can be rendered under **File** then **Render** or by pressing **CTRL+SHIFT+R**.
 ## How it Works
 ## Nodes
 The nodes carry the bulk of the work in making all the magic happen. The same node is used in two scenarios:
@@ -79,16 +79,19 @@ The head and tail can also be useful in helping maintain codebox scope, because 
   
 The textbox is meant to carry small manageable snippets of code. This is where the bulk of the text is carried in the project. The size of this snippet is up to the discretion of the programmer. The idea here being that it must be a simple enough section to read through and understand in a short space of time.
 ### Container
-Containers behave mostly similarly to codeboxes. The difference is that the textbox in a container will contain a continuous strip of the text from the contained nodes. These will be attached tip to tail in their rendering order.
+Containers behave mostly similarly to codeboxes. The differ-
+ence is that the textbox in a container will contain a continuous
+strip of the text from the contained nodes. These will be at-
+tached tip to tail in their rendering order.
 
-Containers may act as passive holders of nodes purely for logical grouping or they can apply an operator to those nodes that they contain. An example of such could be a ``for`` loop, a ``while`` operator, an ``if`` statement, e.t.c. This comes about because the head and tail give containers the ability to hold scope over the nodes that they contain.
+Containers may act as passive holders of nodes purely for logical grouping or they can apply an operator to those nodes that they contain. An example of such could be a ``for`` loop, a ``while`` operator, an ``if`` statement, etc. This comes about because the head and tail give containers the ability to hold scope over the nodes that they contain.
 ## Arcs
-![Nodes joined by arcs](/images/nodesfollowing2.png)
+![Nodes joined by arcs](/images/nodesfollowing4.png)
 
 The arc is present to allow a follow sequence to be determined and it outputs from the right of a node and inputs into the left of the follower.
 ## Putting it Together
 
-![Nodes of different priorities in a container](/images/nodesandcontainer2.png)
+![Nodes of different priorities in a container](/images/nodesandcontainer6.png)
 
 The relationship between codeboxes, containers and arcs then comes together during rendering. Here a few simple rules determine the outcome. Text in the output comes from three sources, which are:
 
@@ -101,7 +104,7 @@ The relationship between codeboxes, containers and arcs then comes together duri
 When the system renders a node, it begins with the head. Then depending on whether it's a codebox or a container it will render the textbox or the contained nodes recursively and lastly renders the tail.
 In order to render a node it has to pick the node and have a reason to move to the next node. Everything starts from the first node. The first node is found at the highest level of nodes i.e. nodes which are not contained by any other nodes. Nodes at any equal level in a container are then ordered by priority and ordered by followings (i.e. arcs).
 
-![Nodes set to show the colour coded priorities](/images/colour_codes2.png)
+![Nodes set to show the colour coded priorities](/images/colour_codes4.png)
 
 The nodes may have 10 priorities as shown in the figure, so this feature must be used sparingly. Priority 0 is the highest and 9 is the lowest. With nodes at the same level the highest priority is rendered first and the lowest is rendered last. The priority is visible as a colour code on the frame of the node. Nodes which have the same priority, at the same level of a container can be considered to be picked in random order(useful for parallel thinking).
 
@@ -114,24 +117,24 @@ This is a function that is used on containers to have elements contained in a se
 
 Different Sizes             |  Focus Node
 :-------------------------:|:-------------------------:
-![Different Size Nodes](/images/three_size_node2.png) | ![Node in Focus](/images/focus_node2.png)
+![Different Size Nodes](/images/three_size_node5.png) | ![Node in Focus](/images/focus_node4.png)
 
 
 
 
-A situation though where "Focus" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.
+A situation though where "Focus" is imperative is a case where a container has been shrunk to a point where the nodes contained become hard to see or where NEETE has determined that they are too small to render. At that point, the inside of the container will have a hatched pattern as in the left figure  above. This pattern reminds the user that the node is a container and has elements which have become too small to see. In order to view details on such a container either it have to be expanded or it will need to be focused. When in focus mode, the top bar changes to highlight the name of the container as in right side figure above.
 
 This feature allows the user to drill into deeper and deeper detail as and where necessary allowing control over the amount of attention needed in different scenarios. 
 ### Ignore
 "Ignore" is a tick box that can be selected on any node, be it a container or a codebox. Once selected, the node will be struck out visually with an "X" as below. 
 
-![Node to ignore](/images/ignore_node.png)
+![Node to ignore](/images/ignore_node4.png)
 
 A node which is set to "Ignore" will have its contents ignored on the text output rendering. Therefore it serves the same purpose as commenting out lines of source code.
 ## Example
-This README is a typical example of NETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.
+This README is a typical example of NEETE in real life operation. The overview is shown in the figure below and the _.nete_ file is available in the **examples** folder.
 
-![README.md NETE overview](/images/neteexample4.png)
+![README.md NEETE overview](/images/neteexample4.png)
 ## Acknowledgements
 This project uses the following libraries in its operations:
 
