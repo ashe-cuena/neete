@@ -1778,7 +1778,7 @@ void init_node_group_context(a_node_group_context *temp_group_list) {
     temp_group_list->focusList = dynarray_create(focus_item);
 
     temp_group_list->current_highlight_button = NULL;
-    temp_group_list->line_wrapping = false;
+    temp_group_list->line_wrapping = true;
 
     temp_group_list->is_embedded = false;
 
