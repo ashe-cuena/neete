@@ -1,6 +1,6 @@
 /*
 Next Evolution Enhanced Text Editor (NEETE), A Visual Diagrammatic Text Editor
-Copyright (C) 2021 Tinashe Gwena
+Copyright (C) 2016 - 2022 Tinashe Gwena
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
