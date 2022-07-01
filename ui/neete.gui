@@ -111,7 +111,7 @@
                     <child>
                       <object class="GtkMenuItem" id="mnu_item_export">
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Export SVG</property>
+                        <property name="label" translatable="yes">Export SVG(exp)</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="on_mnu_item_export_activate" swapped="no"/>
                       </object>
