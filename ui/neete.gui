@@ -2,7 +2,6 @@
 <!-- Generated with glade 3.22.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <requires lib="gtksourceview" version="3.0"/>
   <object class="GtkWindow" id="window">
     <property name="width_request">800</property>
     <property name="height_request">500</property>
@@ -659,8 +658,8 @@
     <property name="deletable">False</property>
     <property name="transient_for">window</property>
     <property name="program_name">Next Evolution Enhanced Text Editor</property>
-    <property name="version">2.01</property>
-    <property name="copyright" translatable="yes">(C) 2022 Tinashe Gwena</property>
+    <property name="version">2.02</property>
+    <property name="copyright" translatable="yes">(C) 2016 - 2022 Tinashe Gwena</property>
     <property name="logo">res/neete_logo.png</property>
     <property name="license_type">gpl-2-0</property>
     <signal name="delete-event" handler="on_dlg_about_delete_event" swapped="no"/>
@@ -1135,41 +1134,7 @@
             <property name="shadow_type">in</property>
             <property name="propagate_natural_width">True</property>
             <child>
-              <object class="GtkViewport">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="hscroll_policy">natural</property>
-                <child>
-                  <object class="GtkBox" id="bx_ribbon_test">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="orientation">vertical</property>
-                    <child>
-                      <object class="GtkSourceView" id="txt_codebox_code">
-                        <property name="can_focus">True</property>
-                        <property name="hexpand">False</property>
-                        <property name="vexpand">True</property>
-                        <property name="wrap_mode">char</property>
-                        <property name="left_margin">2</property>
-                        <property name="right_margin">2</property>
-                        <property name="monospace">True</property>
-                        <property name="show_line_numbers">True</property>
-                        <property name="show_line_marks">True</property>
-                        <property name="indent_width">4</property>
-                        <property name="auto_indent">True</property>
-                        <property name="show_right_margin">True</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                  </object>
-                </child>
-              </object>
+              <placeholder/>
             </child>
           </object>
           <packing>
