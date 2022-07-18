@@ -124,6 +124,16 @@ typedef struct {
 
     a_ribbon_element *editing_ribbon;
     int ribbon_count;
+
+    GtkWidget 	*b_box_ribbon;
+    GtkWidget 	*ribbon_viewport;
+
+
+// internal text stuff
+    bool has_internal_text;
+    GtkWidget 	*internal_label;
+    GtkSourceView	*s_source_view;
+    GtkTextBuffer   *e_txt_codebox_code;
 } a_node_note;
 typedef enum {
     CLOSE,
@@ -206,11 +216,8 @@ struct {
     int source_codeBox;
 } node_to_copy;
 typedef struct {
-//GtkWidget *menu_popup;
-//GtkWidget *w_txtvw_main;            // Pointer to text view object
     GtkWidget *w_dlg_file_choose;       // Pointer to file chooser dialog box
     GtkWidget *w_dlg_file_save;       // Pointer to file save dialog box
-//GtkTextBuffer *textbuffer_main;     // Pointer to text buffer
     GtkWidget *drawingArea;
 
 //----------------------------------
@@ -228,8 +235,7 @@ typedef struct {
     GtkWidget	*w_darea_scroll;
     GtkLabel 	*l_lbl_codebox_focus;
     GtkWidget       *c_cont_scrollwin;
-    GtkWidget       *b_box_ribbon;
-//GtkWidget *
+    GtkWidget       *w_sw_ribbon_carrier;
 
 //------------------------------------
 //  options window
@@ -251,6 +257,7 @@ typedef struct {
 
     language_widgets language_buttons;
     tools_widgets tool_radio_buttons;
+
 
 //----------------------------------------------
     GtkFileFilter *netefilter;
@@ -543,7 +550,6 @@ gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event,
             rightClickCoord.y = (guint)event->y;
             gtk_menu_popup_at_pointer(GTK_MENU(pmenu), event);
         } else {
-
             mouse_down = true;
 
             doMouseDown2((guint)event->x, (guint)event->y, data);
@@ -555,7 +561,6 @@ gint on_drawingarea_button_press_event(GtkWidget *widget, GdkEventButton *event,
     if(event->type == GDK_DOUBLE_BUTTON_PRESS) {
         doDoubleClick((guint)event->x, (guint)event->y, data, app_wdgts);
     }
-
 
     gtk_widget_queue_draw( widget);
     mark_unsaved(app_wdgts);
@@ -644,11 +649,6 @@ int nete_new_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea) 
         destination_topNode = current_nodegroup.topNode.node;
     }
 
-
-
-    printf("inserting into %d %d with topnode %d\n", newNodeZone.node, newNodeZone.codeBox_id, codeBox_list[newNodeZone.codeBox_id].topNode.node);
-
-
     newnodeNodeZone.node = node_group_push(
                                destination_group,
                                destination_x,
@@ -688,6 +688,7 @@ int nete_new_node(__attribute__((unused)) GtkWidget *widget, GtkWidget *ddarea) 
 
     gtk_widget_queue_draw(ddarea);
     deactivate_quit();
+
     return TRUE;
 }
 int nete_copy_node(__attribute__((unused)) GtkWidget *widget, __attribute__((unused)) GtkWidget *ddarea) {
@@ -802,8 +803,8 @@ int nete_restore_all(__attribute__((unused)) GtkWidget *widget, app_widgets *app
         current_nodegroup.topNode.codeBox_id = temp_focus_item.codeBox_id;
         gtk_adjustment_set_value (scrollx, temp_focus_item.scroll_x);
         gtk_adjustment_set_value (scrolly, temp_focus_item.scroll_y);
-    }
 
+    }
     if(current_nodegroup.topNode.node == -1) {
         gtk_widget_hide(app_wdgts->l_lbl_codebox_focus);
     } else {
@@ -828,6 +829,7 @@ void on_window_delete_event(GtkWidget *object, app_widgets *app_wdgts, gpointer 
     }
 }
 void on_msg_file_save_warn_close (GtkDialog *dialog, gpointer   user_data) {
+
 }
 void on_msg_file_save_warn_response (GtkDialog *dialog, gint       response_id, app_widgets *app_wdgts) {
     if(response_id == -9) {
@@ -857,6 +859,9 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     int file_tab_id = -1;
 
     int priority_num = 0;
+
+    GtkTextIter start;
+    GtkTextIter end;
 
     if(node_being_edited.node != -1 && node_being_edited.codeBox_id != -1) {
 
@@ -907,6 +912,21 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
 
         ribbon_submit();
 
+        if(node_being_edited.has_internal_text) {
+            gtk_container_remove(GTK_CONTAINER (node_being_edited.b_box_ribbon), node_being_edited.internal_label);
+            gtk_widget_destroy(node_being_edited.internal_label);
+
+            gtk_text_buffer_get_start_iter (node_being_edited.e_txt_codebox_code, &start);
+            gtk_text_buffer_get_end_iter (node_being_edited.e_txt_codebox_code, &end);
+
+            real_code = gtk_text_buffer_get_text(node_being_edited.e_txt_codebox_code, &start, &end, FALSE);
+
+            string_set(&codeBox_list[node_being_edited.codeBox_id].node_group[node_being_edited.node].real_code, real_code);
+
+            gtk_container_remove(GTK_CONTAINER (node_being_edited.b_box_ribbon), node_being_edited.s_source_view);
+            gtk_widget_destroy(node_being_edited.s_source_view);
+            node_being_edited.has_internal_text = false;
+        }
         node_being_edited.node = -1;
         node_being_edited.codeBox_id = -1;
     }
@@ -914,15 +934,25 @@ void on_btn_codebox_submit_clicked(__attribute__((unused)) GtkButton *widget, ap
     gtk_window_get_position(GTK_WINDOW(app_wdgts->w_dlg_codebox), &codeboxWindowPos.x, &codeboxWindowPos.y);
     first_time_codebox = false;
 
+    if(node_being_edited.is_single) {
+    } else {
+        gtk_container_remove (GTK_CONTAINER (app_wdgts->c_cont_scrollwin), node_being_edited.ribbon_viewport);
+    }
+
     gtk_widget_hide(app_wdgts->w_dlg_codebox);
 
     gtk_widget_queue_draw(app_wdgts->drawingArea);
     deactivate_quit();
     mark_unsaved(app_wdgts);
 }
-gboolean on_window_codebox_delete_event( GtkWidget *widget, __attribute__((unused)) GdkEvent *event, __attribute__((unused)) gpointer data) {
+gboolean on_window_codebox_delete_event( GtkWidget *widget, __attribute__((unused)) GdkEvent *event, app_widgets *app_wdgts, __attribute__((unused)) gpointer data) {
     gtk_window_get_position(GTK_WINDOW(widget), &codeboxWindowPos.x, &codeboxWindowPos.y);
     first_time_codebox = false;
+
+    if(node_being_edited.is_single) {
+    } else {
+        gtk_container_remove (GTK_CONTAINER (app_wdgts->c_cont_scrollwin), node_being_edited.ribbon_viewport);
+    }
 
     gtk_widget_hide(widget);
     return TRUE;
@@ -935,7 +965,6 @@ void on_btn_codebox_tocodebox_clicked(__attribute__((unused)) GtkButton *widget,
 
     GtkTextIter start;
     GtkTextIter end;
-
 
     if(node_being_edited.is_single) {
         if(gtk_text_buffer_get_selection_bounds (node_being_edited.editing_ribbon[0].e_txt_codebox_code, &start, &end)) {
@@ -1032,8 +1061,8 @@ void on_btn_codebox_totail_clicked(__attribute__((unused)) GtkButton *widget, ap
     GtkTextIter start;
     GtkTextIter end;
 
-
     if(node_being_edited.is_single) {
+
         if(gtk_text_buffer_get_selection_bounds (node_being_edited.editing_ribbon[0].e_txt_codebox_code, &start, &end)) {
             string_init(&final_text);
 
@@ -1052,7 +1081,6 @@ void on_btn_codebox_totail_clicked(__attribute__((unused)) GtkButton *widget, ap
             string_free(&final_text);
             g_free(selected_text);
         }
-
     }
 }
 void on_mnu_item_new_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
@@ -1061,7 +1089,6 @@ void on_mnu_item_new_activate(__attribute__((unused)) GtkMenuItem *menuitem, app
     temp_tab_codeBox.codeBox_id = create_new_tab(app_wdgts);
     dynarray_push(tab_codeBoxes, temp_tab_codeBox);
     current_tab_id =  dynarray_length(tab_codeBoxes) - 1;
-
 
     gtk_notebook_set_current_page (app_wdgts->t_ntb_nete_tabs,
                                    current_tab_id);
@@ -1116,6 +1143,7 @@ void on_mnu_item_render_activate(__attribute__((unused)) GtkMenuItem *menuitem, 
     primary_nodes = getPrimaryNodes(current_nodegroup.topNode);
 
     string_init(&feedback_text);
+
     string_set(&output_text, "");
     clearRenderedData();
     renderDataNodes(primary_nodes, false);
@@ -1141,16 +1169,39 @@ void on_mnu_item_render_activate(__attribute__((unused)) GtkMenuItem *menuitem, 
 void on_mnu_item_export_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
     cairo_surface_t *surface2;
     cairo_t *cr2;
+    char *feedback_text;
+
+    string_init(&feedback_text);
+
+    char pathbuf[2048];
+    ssize_t pathlen = readlink("/proc/self/exe", pathbuf, 2047);
+    pathbuf[pathlen]='\0';
+
+    char * ptr;
+    int    ch = '/';
+    char * default_svg_name = "svgfile.svg";
+    int shape_name_length = strlen(default_svg_name);
+
+    ptr = strrchr( pathbuf, ch );
+    *(ptr + 1) = '\0';
+
+    strcat(ptr+1, default_svg_name);
+    *(ptr + 1 + shape_name_length) = '\0';
+
+    string_set(&feedback_text, "Exported SVG:  ");
+    string_add(&feedback_text, pathbuf);
+
+    write_feedback(app_wdgts, feedback_text);
 
     exporting_file = true;
 
-    surface2 = cairo_svg_surface_create("svgfile.svg", 4096, 2048);
+    surface2 = cairo_svg_surface_create(pathbuf, 4096, 2048);
     cr2 = cairo_create(surface2);
 
     redraw(cr2);
+
     cairo_surface_destroy(surface2);
     cairo_destroy(cr2);
-
 
     exporting_file = false;
 }
@@ -1169,16 +1220,11 @@ void on_mnu_open_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
         file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(app_wdgts->w_dlg_file_choose));
         if (file_name != NULL) {
 
-            printf("session filename -> %s\n", file_name);
-
             file_success = g_file_get_contents(file_name, &file_contents, NULL, NULL);
             if (file_success) {
-
-                printf("session data -> \n\n%s\n", file_contents);
                 load_session(file_contents, app_wdgts);
             }
             g_free(file_contents);
-
         }
         g_free(file_name);
     }
@@ -1227,9 +1273,7 @@ void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
     }
     gtk_widget_hide(app_wdgts->w_dlg_file_save);
 
-
 // =========== then write the actual file ===========
-
     if(write_to_file) {
         fp = fopen(output_filename, "w");
 
@@ -1246,8 +1290,8 @@ void on_mnu_save_session_activate(__attribute__((unused)) GtkMenuItem *menuitem,
         sprintf(feedback_text, "session saved: %d-%02d-%02d %02d:%02d:%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
         write_feedback(app_wdgts, feedback_text);
-    }
 
+    }
 }
 void on_mnu_nete_quit_activate(__attribute__((unused)) GtkMenuItem *menuitem,  gpointer user_data) {
     if(check_unsaved()) {
@@ -1259,12 +1303,14 @@ void on_mnu_nete_quit_activate(__attribute__((unused)) GtkMenuItem *menuitem,  g
 }
 void on_mnu_move_item_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
     gtk_toggle_button_set_active (app_wdgts->tool_radio_buttons.r_movebtn, TRUE);
+
 }
 void on_mnu_contain_item_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
     gtk_toggle_button_set_active (app_wdgts->tool_radio_buttons.r_containbtn, TRUE);
 }
 void on_mnu_link_item_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
     gtk_toggle_button_set_active (app_wdgts->tool_radio_buttons.r_linkbtn, TRUE);
+
 }
 void on_mnu_findline_item_activate(__attribute__((unused)) GtkMenuItem *menuitem, app_widgets *app_wdgts) {
     gtk_entry_grab_focus_without_selecting(app_wdgts->e_txt_search_line);
@@ -1293,11 +1339,12 @@ void on_cmnu_wrap_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app_wdg
         new_wrapping_mode = GTK_WRAP_NONE;
         current_nodegroup.line_wrapping = false;
     }
+
     for(i = 0; i < dynarray_length(node_being_edited.editing_ribbon); i++) {
         gtk_text_view_set_wrap_mode (node_being_edited.editing_ribbon[i].s_source_view, new_wrapping_mode);
     }
 
-    gtk_widget_queue_draw(app_wdgts->b_box_ribbon);
+    gtk_widget_queue_draw(node_being_edited.b_box_ribbon);
     gtk_widget_queue_draw(app_wdgts->c_cont_scrollwin);
     gtk_widget_queue_draw(app_wdgts->w_dlg_codebox);
 }
@@ -1340,6 +1387,7 @@ void on_rbtn_language_toggled (GtkCheckMenuItem *checkmenuitem, app_widgets *app
         current_nodegroup.language = gtk_source_language_manager_get_language(manager, "text");
         current_nodegroup.current_highlight_button = app_wdgts->language_buttons.b_rbtn_plain_text;
     }
+
     for(i = 0; i < dynarray_length(node_being_edited.editing_ribbon); i++) {
         gtk_source_buffer_set_language(node_being_edited.editing_ribbon[i].e_txt_codebox_code, current_nodegroup.language);
     }
@@ -1376,7 +1424,6 @@ void on_btn_rdo_exenter_toggled (GtkToggleButton *togglebutton, __attribute__((u
     if (gtk_toggle_button_get_active(togglebutton)) {
         toolmode = EXITENTER;
     }
-
 }
 void on_btn_rdo_link_toggled (GtkToggleButton *togglebutton, __attribute__((unused)) gpointer user_data) {
     if (gtk_toggle_button_get_active(togglebutton)) {
@@ -1433,7 +1480,6 @@ int node_group_push(int codeBox_id, int x, int y, int width, int height, int nex
 
     string_init(&temp_node.real_code);
     string_set(&temp_node.real_code, real_code);
-
 
     temp_node.header_dim.width = 1;
     temp_node.header_dim.height = 1;
@@ -1732,6 +1778,7 @@ void init_arrays() {
     node_being_resized.node = -1;
     node_being_edited.node = -1;
     node_being_edited.codeBox_id = -1;
+    node_being_edited.has_internal_text = false;
     node_being_edited.editing_ribbon = dynarray_create(a_ribbon_element);
 
     string_init(&output_text);
@@ -1787,9 +1834,11 @@ void init_node_group_context(a_node_group_context *temp_group_list) {
 }
 void delete_group_context(a_node_group_context *temp_group_list) {
     int i;
+
     string_free(&(temp_group_list->name));
     string_free(&(temp_group_list->destination));
     string_free(&(temp_group_list->fileName));
+
     for(i = 0; i < dynarray_length(temp_group_list->node_group); i++) {
         emptyout_node(&(temp_group_list->node_group[i]));
     }
@@ -1815,6 +1864,7 @@ void init_shape_element(shape_element * elmnt) {
     elmnt->parameters = dynarray_create(float);
 }
 void init_body_shape(a_body_shape * bshape) {
+
     bshape->shapes_sequence = dynarray_create(shape_element);
 }
 void create_sample_shapes() {
@@ -1866,7 +1916,6 @@ void create_sample_shapes() {
             dynarray_push(temp_shape_element3[i+4].parameters, shapes_params[i+4][j]);
 
         }
-
     }
 
     init_body_shape(&temp_body_shape3);
@@ -1885,7 +1934,6 @@ void create_sample_shapes() {
 //============================================================================================
 
     load_body_shapes();
-
 }
 void load_body_shapes() {
 
@@ -1900,7 +1948,6 @@ void load_body_shapes() {
     int shape_name_length = strlen(default_shape_name);
 
     ptr = strrchr( pathbuf, ch );
-
     *(ptr + 1) = '\0';
 
     strcat(ptr+1, default_shape_name);
@@ -1961,6 +2008,7 @@ void load_body_shapes() {
                 i++;
             }
             shapes_sequence_array = cJSON_GetObjectItem(specific_shape, "shapes_sequence");
+
             cJSON_ArrayForEach(contained_member, shapes_sequence_array) {
 
                 temp_shape_element = malloc (sizeof (shape_element));
@@ -1982,6 +2030,7 @@ void load_body_shapes() {
 
                 dynarray_push(temp_body_shape->shapes_sequence, *temp_shape_element);
             }
+
             dynarray_push(body_shapes, *temp_body_shape);
         }
     }
@@ -2048,6 +2097,7 @@ void write_to_file(app_widgets *app_wdgts) {
             temp_dir_name[dir_name_length] = 0;
             string_set(&(current_nodegroup.fileDirectory), temp_dir_name);
             string_set(&last_file_directory, temp_dir_name);
+
             gtk_notebook_set_tab_label_text (app_wdgts->t_ntb_nete_tabs,
                                              gtk_notebook_get_nth_page (app_wdgts->t_ntb_nete_tabs, current_codeBox), tab_name);
 
@@ -2063,8 +2113,8 @@ void write_to_file(app_widgets *app_wdgts) {
     }
 
 // =========== then write the actual file ===========
-
     if(write_to_file) {
+
         actual_write_to_file(output_filename, current_codeBox);
 
         current_nodegroup.node_group_altered = false;
@@ -2136,10 +2186,9 @@ int load_codeBox_file(char *file_name, app_widgets *app_wdgts, bool is_embedded)
 
             codeBox_list[temp_current_codeBox].group_id = temp_current_codeBox;
             codeBox_list[temp_current_codeBox].topNode.codeBox_id = temp_current_codeBox;
+
             load_codeBox(file_contents, app_wdgts, temp_current_codeBox);
-
         } else {
-
             temp_tab_codeBox.codeBox_id = create_new_tab(app_wdgts);
             dynarray_push(tab_codeBoxes, temp_tab_codeBox);
 
@@ -2174,7 +2223,6 @@ int load_codeBox_file(char *file_name, app_widgets *app_wdgts, bool is_embedded)
             current_tab_id = temp_tab_id;
 
             current_nodegroup.fileSaveAsMode = false;
-
         }
 
         gtk_widget_queue_draw(app_wdgts->drawingArea);
@@ -2266,7 +2314,6 @@ void load_codeBox(char *nete_string, app_widgets *app_wdgts, int codeBox_id) {
         if(is_file) {
             real_is_file = (char) is_file->valueint;
         }
-
         if (!cJSON_IsNumber(priority)) {
             real_priority = atoi(priority->valuestring);
         } else {
@@ -2296,6 +2343,7 @@ void load_codeBox(char *nete_string, app_widgets *app_wdgts, int codeBox_id) {
 
         dynarray_destroy(temp_contained);
     }
+    printf("num nodes loaded %d\n", dynarray_length(codeBox_list[codeBox_id].node_group));
 
     for(i = 0; i < dynarray_length(codeBox_list[codeBox_id].node_group); i++) {
         check_obscured(i, codeBox_id);
@@ -2305,6 +2353,7 @@ void load_codeBox(char *nete_string, app_widgets *app_wdgts, int codeBox_id) {
             codeBox_list[codeBox_id].node_group[i].file_tab_id = returned_file_tab_id;
             codeBox_list[returned_file_tab_id].cont_by.node = i;
             codeBox_list[returned_file_tab_id].cont_by.codeBox_id = codeBox_id;
+            printf("inner file_loaded\n");
         }
     }
 
@@ -2498,7 +2547,6 @@ char* stringify_nodes(int codeBox_id) {
 end:
     cJSON_Delete(output_code);
     return string;
-
 }
 void string_init(char** string_ptr) {
     char *ptr = malloc(16);
@@ -2510,6 +2558,7 @@ void string_free(char** string_ptr) {
 void string_set(char** destination, char* value) {
     int new_size = strlen(value);
 
+// Add 1 to account for '\0' null terminator
     *destination = realloc(*destination, sizeof(char)*new_size + 1);
 
     if(*destination == NULL) {
@@ -2521,6 +2570,7 @@ void string_set(char** destination, char* value) {
 void string_add(char** destination, char* value) {
     int new_size = strlen(*destination) + strlen(value);
 
+// Add 1 to account for '\0' null terminator
     *destination = realloc(*destination, sizeof(char)*new_size + 1);
 
     if(*destination == NULL) {
@@ -2539,6 +2589,7 @@ void splice_out_node(int *array, int inner_node) {
 
     while(i < array_length) {
         if(array[i] == inner_node) {
+            // we splice the node
             j = i;
             while(j < array_length) {
                 array[j] = array[j + 1];
@@ -2613,6 +2664,7 @@ void quick_sort(a_qsort_element  array[], int low, int high) {
 
         quick_sort(array, piv + 1, high);
     }
+
 }
 int* rearrange_nodes(int *nodes) {
     int i;
@@ -2671,6 +2723,7 @@ void remove_nodegroup(app_widgets *app_wdgts) {
 
     int final_tabcodebox_index = current_tab_id;
     int present_tabfinal_index = current_tab_id + 1;
+
 
     if(dynarray_length(codeBox_list) > 1) {
         if(current_codeBox == (dynarray_length(codeBox_list) - 1)) {
@@ -2762,11 +2815,9 @@ void ribbon_submit(void) {
         string_set(&codeBox_list[node_being_edited.codeBox_id].node_group[node_being_edited.node].real_code, real_code);
 
     } else {
-
         for(i = 0; i < dynarray_length(node_being_edited.editing_ribbon); i++) {
             gtk_text_buffer_get_start_iter (node_being_edited.editing_ribbon[i].e_txt_codebox_code, &start);
             gtk_text_buffer_get_end_iter (node_being_edited.editing_ribbon[i].e_txt_codebox_code, &end);
-
 
             head = gtk_entry_get_text (node_being_edited.editing_ribbon[i].e_txt_codebox_head);
             real_code = gtk_text_buffer_get_text(node_being_edited.editing_ribbon[i].e_txt_codebox_code, &start, &end, FALSE);
@@ -2777,6 +2828,7 @@ void ribbon_submit(void) {
                                      (char *) head,
                                      (char *) real_code,
                                      (char *) tail);
+
         }
     }
 }
@@ -2815,7 +2867,6 @@ void get_absolutePosition(a_container_pos *container_pos, int node, int codeBox_
         container_pos->x = ((node_x*current_scale) + upper_position.x);
         container_pos->y = (((node_y )*current_scale) + (node_head_height + node_spacer_height)*upper_position.scaleFactor + upper_position.y );
         container_pos->scaleFactor = current_scale;
-
     }
 }
 void launchBox(int node, int codeBox_id, int line_start, app_widgets *app_wdgts) {
@@ -2898,37 +2949,90 @@ void create_text_ribbon(int node, int codeBox_id, int line_start, app_widgets *a
         gtk_source_view_set_show_right_margin (temp_ribbon_element->s_source_view, TRUE);
         gtk_source_view_set_right_margin_position(temp_ribbon_element->s_source_view, 80);
         gtk_source_view_set_show_line_marks (temp_ribbon_element->s_source_view, TRUE);
-        gtk_container_add (GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element->s_source_view);
+        g_object_set (temp_ribbon_element->s_source_view, "hexpand", TRUE, NULL);
+        g_object_set (temp_ribbon_element->s_source_view, "vexpand", TRUE, NULL);
+        gtk_container_add (GTK_CONTAINER (app_wdgts->c_cont_scrollwin), temp_ribbon_element->s_source_view);
+
         gtk_widget_show (temp_ribbon_element->s_source_view);
 
         dynarray_push(node_being_edited.editing_ribbon, *temp_ribbon_element);
 
     } else if(body_id == 1) {
+        node_being_edited.ribbon_viewport = gtk_viewport_new (NULL, NULL);
+        node_being_edited.b_box_ribbon = gtk_box_new (GTK_ORIENTATION_VERTICAL, 1);
+
         node_being_edited.is_single = false;
         if(dynarray_length(node_being_edited.editing_ribbon) == 0) {
             renderRibbonDataNodes(the_node_group[node].contained, false, app_wdgts);
+            if(strlen(the_node_group[node].real_code) > 0) {
+                node_being_edited.has_internal_text = true;
+
+                node_being_edited.internal_label = gtk_label_new (NULL);
+
+                // ------- set label size --------------
+                PangoAttrList *attrlist = pango_attr_list_new();
+                PangoAttribute *attr = pango_attr_size_new_absolute(16 * PANGO_SCALE);
+                pango_attr_list_insert(attrlist, attr);
+
+                gtk_label_set_attributes(GTK_LABEL (node_being_edited.internal_label), attrlist);
+                pango_attr_list_unref(attrlist);
+                // -----------------------------
+
+                gtk_label_set_text (node_being_edited.internal_label, "--- Container Text ---");
+                gtk_container_add (GTK_CONTAINER (node_being_edited.b_box_ribbon), node_being_edited.internal_label);
+                gtk_widget_show (node_being_edited.internal_label);
+
+                node_being_edited.e_txt_codebox_code = GTK_SOURCE_BUFFER (gtk_source_buffer_new (NULL));
+                node_being_edited.s_source_view = gtk_source_view_new_with_buffer (node_being_edited.e_txt_codebox_code);
+                //gtk_source_buffer_set_language(temp_ribbon_element->e_txt_codebox_code, language);
+                gtk_source_buffer_set_language(node_being_edited.e_txt_codebox_code, current_nodegroup.language);
+
+                gtk_text_buffer_set_text(node_being_edited.e_txt_codebox_code, current_nodegroup.node_group[node].real_code, -1);
+                gtk_source_view_set_show_line_numbers(node_being_edited.s_source_view, FALSE);
+                gtk_text_view_set_monospace (node_being_edited.s_source_view, TRUE);
+                gtk_text_view_set_wrap_mode (node_being_edited.s_source_view, new_wrapping_mode);
+                gtk_text_view_set_left_margin (node_being_edited.s_source_view, 2);
+                gtk_source_view_set_show_right_margin (node_being_edited.s_source_view, TRUE);
+                gtk_source_view_set_right_margin_position(node_being_edited.s_source_view, 80);
+                gtk_source_view_set_show_line_marks (node_being_edited.s_source_view, TRUE);
+                gtk_container_add (GTK_CONTAINER (node_being_edited.b_box_ribbon), node_being_edited.s_source_view);
+                gtk_widget_show (node_being_edited.s_source_view);
+
+            }
+
+            g_object_set (node_being_edited.ribbon_viewport, "hexpand", TRUE, NULL);
+            g_object_set (node_being_edited.ribbon_viewport, "vexpand", TRUE, NULL);
+
+
+            gtk_container_add (GTK_CONTAINER (node_being_edited.ribbon_viewport), node_being_edited.b_box_ribbon);
+            gtk_container_add (GTK_CONTAINER (app_wdgts->c_cont_scrollwin), node_being_edited.ribbon_viewport);
+
+            gtk_widget_show (node_being_edited.b_box_ribbon);
+            gtk_widget_show (node_being_edited.ribbon_viewport);
         }
     }
 }
 void clear_ribbon(app_widgets *app_wdgts) {
     a_ribbon_element temp_ribbon_element;
 
+    GtkAdjustment *scrolly;
+
+    scrolly = gtk_scrolled_window_get_vadjustment (app_wdgts->c_cont_scrollwin);
+    gtk_adjustment_set_value (scrolly, 0);
+
     if(node_being_edited.is_single) {
         dynarray_pop(node_being_edited.editing_ribbon, &temp_ribbon_element);
-        gtk_container_remove(GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element.s_source_view);
-        gtk_widget_destroy(temp_ribbon_element.s_source_view);
+        gtk_container_remove (GTK_CONTAINER (app_wdgts->c_cont_scrollwin), temp_ribbon_element.s_source_view);
+
     } else {
         while(dynarray_length(node_being_edited.editing_ribbon)) {
 
             dynarray_pop(node_being_edited.editing_ribbon, &temp_ribbon_element);
-            gtk_container_remove(GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element.b_head_strip);
-            gtk_widget_destroy(temp_ribbon_element.b_head_strip);
-            gtk_container_remove(GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element.s_source_view);
-            gtk_widget_destroy(temp_ribbon_element.s_source_view);
-            gtk_container_remove(GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element.b_tail_strip);
-            gtk_widget_destroy(temp_ribbon_element.b_tail_strip);
-
+            gtk_container_remove(GTK_CONTAINER (node_being_edited.b_box_ribbon), temp_ribbon_element.b_head_strip);
+            gtk_container_remove(GTK_CONTAINER (node_being_edited.b_box_ribbon), temp_ribbon_element.s_source_view);
+            gtk_container_remove(GTK_CONTAINER (node_being_edited.b_box_ribbon), temp_ribbon_element.b_tail_strip);
         }
+        gtk_container_remove (GTK_CONTAINER (app_wdgts->c_cont_scrollwin), node_being_edited.ribbon_viewport);
     }
 }
 bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZone, int codeBox_id, int x, int y) {
@@ -2951,6 +3055,7 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
     container_pos.scaleFactor = current_nodegroup.zoomScaleFactor;
 
     if (the_node_group[firstNodeZone->node].cont_by != secondNodeZone->node  && check_not_descendent(firstNodeZone->node, secondNodeZone->node, codeBox_id) && check_not_circular(firstNodeZone->node, secondNodeZone->node, codeBox_id)) {
+
         if(the_node_group[firstNodeZone->node].cont_by != -1) {
             containerRemoveNode(the_node_group[firstNodeZone->node].cont_by, firstNodeZone->node, firstNodeZone->codeBox_id);
         }
@@ -2975,7 +3080,6 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
                 better_scale = container_pos.scaleFactor * calculateScale(secondNodeZone->node, codeBox_id, the_node_group[secondNodeZone->node].contained, codeBox_id, 0, container_pos.scaleFactor);
             }
         }
-
         if(secondNodeZone->node != -1) {
             dynarray_push(the_node_group[secondNodeZone->node].contained, firstNodeZone->node);
         }
@@ -2984,6 +3088,7 @@ bool recontain_node(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZon
         }
         the_node_group[firstNodeZone->node].x = (x - container_pos.x) / better_scale;
         the_node_group[firstNodeZone->node].y = (y - container_pos.y) / better_scale;
+
         tempNode = the_node_group[firstNodeZone->node].previous;
 
         while (tempNode != -1) {
@@ -3085,7 +3190,6 @@ bool check_not_descendent(int main_node, int desc_node, int codeBox_id) {
 
         if(!check_not_descendent(the_node_group[main_node].contained[i], desc_node, codeBox_id))
             return false;
-
     }
 
     return true;
@@ -3301,7 +3405,6 @@ int pasteNode(int parent, int node, int source_codeBox) {
     for (i = 0; i < dynarray_length(codeBox_list[source_codeBox].node_group[node].contained); i++) {
         pasteNode(newID, codeBox_list[source_codeBox].node_group[node].contained[i], source_codeBox);
     }
-
     return newID;
 }
 int get_key(int key) {
@@ -3368,11 +3471,9 @@ void doMouseDown2(int x, int y, __attribute__((unused)) gpointer data) {
             getNodeAndZone(&newNodeZone, primary_nodes, current_nodegroup.topNode, x, y, 0, 0, current_nodegroup.zoomScaleFactor, tempNodeZone.node);
 
             if(codeBox_list[newNodeZone.codeBox_id].node_group[newNodeZone.node].is_file == 1 && codeBox_list[newNodeZone.codeBox_id].node_group[newNodeZone.node].file_tab_id != -1) {
-
                 newNodeZone.codeBox_id = codeBox_list[newNodeZone.codeBox_id].node_group[newNodeZone.node].file_tab_id;
                 newNodeZone.node = -1;
             }
-
             if(tempNodeZone.codeBox_id == newNodeZone.codeBox_id) {
                 recontain_node(&tempNodeZone, &newNodeZone, newNodeZone.codeBox_id, x, y);
                 check_obscuring(tempNodeZone.node, tempNodeZone.codeBox_id);
@@ -3484,6 +3585,7 @@ void doMouseUp2(int x, int y, __attribute__((unused)) gpointer data) {
     nodeHeadFound = false;
     nodeBodyFlankFound = false;
     nodeWidthAdjust = false;
+
 }
 bool join_nodes(a_nodezoneinfo* firstNodeZone, a_nodezoneinfo* secondNodeZone, int codeBox_id) {
     int this_codeBox_id = codeBox_id;
@@ -3760,6 +3862,7 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
 
     int max_pixel_width = min_width;
     char *position_pointer;
+
     char single_row[100];
     int row_width;
     bool header_valid;
@@ -3806,7 +3909,6 @@ a_header_dimension get_header_dimensions(cairo_t *cr, char *header_text, int hea
                 row_width = my_font_extents.width;
                 word_count ++;
             }
-
             if(word_count > 1) {
                 memcpy( &single_row[0], header_text + position, last_position - position );
                 single_row[last_position - position] = '\0';
@@ -3910,6 +4012,7 @@ void draw_body(cairo_t *cr, int x,int  y, int width, int height, int priority, f
             } else if(body_shapes[body_id].shapes_sequence[i].shape_base_type == ELASTIC) {
                 fix_poscoords(&corr_coord, body_shapes[body_id].shapes_sequence[i].shape_pos_type, rectx, recty, rectwidth, rectheight, x, y, maxx, maxy, body_id);
                 cairo_rectangle(cr, corr_coord.x, corr_coord.y, corr_coord.auxx, corr_coord.auxy);
+
             } else {
                 cairo_rectangle(cr, x + (rectx*width), y + (recty*height), width*rectwidth, height*rectheight);
             }
@@ -3926,15 +4029,12 @@ void draw_body(cairo_t *cr, int x,int  y, int width, int height, int priority, f
             } else if(body_shapes[body_id].shapes_sequence[i].shape_base_type == ELASTIC) {
                 fix_poscoords(&corr_coord, body_shapes[body_id].shapes_sequence[i].shape_pos_type, rectx, recty, 0, 0, x, y, maxx, maxy, body_id);
                 cairo_move_to(cr, corr_coord.x, corr_coord.y);
-
             } else {
                 cairo_move_to(cr, x + (rectx*width), y + (recty*height));
             }
-
             for(j = 2; j < dynarray_length(body_shapes[body_id].shapes_sequence[i].parameters); j+=2) {
                 rectx = body_shapes[body_id].shapes_sequence[i].parameters[j];
                 recty = body_shapes[body_id].shapes_sequence[i].parameters[j+1];
-
                 if(body_shapes[body_id].shapes_sequence[i].shape_base_type == ANCHOR) {
                     fix_poscoords(&corr_coord, body_shapes[body_id].shapes_sequence[i].shape_pos_type, rectx, recty, 0, 0, x, y, maxx, maxy, body_id);
                     cairo_line_to(cr, corr_coord.x, corr_coord.y);
@@ -3968,6 +4068,7 @@ void draw_body(cairo_t *cr, int x,int  y, int width, int height, int priority, f
             }
 
             cairo_stroke_preserve(cr);
+
         }
     }
 
@@ -3976,6 +4077,7 @@ void draw_body(cairo_t *cr, int x,int  y, int width, int height, int priority, f
     cairo_set_dash(cr, dashnone, 0, 0);
 
     if(children_scale_factor > 0.35) {
+
     } else {
         cairo_set_source(cr, pattern);
         tempcolour = colorConverter(0x444444);
@@ -4036,6 +4138,7 @@ void drawGrid(cairo_t *cr) {
         cairo_stroke (cr);
         j++;
     }
+
 }
 void draw_nodes(cairo_t *cr, int *nodes, int codeBox_id, int x, int y, int width, int height, float scale_factor, bool container_state) {
     int i;
@@ -4100,7 +4203,6 @@ void draw_nodes(cairo_t *cr, int *nodes, int codeBox_id, int x, int y, int width
     }
 }
 void fix_poscoords(fixed_coords* return_coords, shapepostype shape_poscoord, float x, float y, float auxx, float auxy, int minx, int miny, int maxx, int maxy, int shape_id ) {
-
     float returnx;
     float returny;
 //order is ABLwh ABRwh ATLwh ATRwh
@@ -4177,6 +4279,7 @@ void fix_poscoords(fixed_coords* return_coords, shapepostype shape_poscoord, flo
     return_coords->y = returny;
     return_coords->auxx = return_auxx;
     return_coords->auxy = return_auxy;
+
 }
 void drawNode(cairo_t *cr, int node, int codeBox_id, int frame_x, int frame_y, __attribute__((unused)) int frame_width, __attribute__((unused)) int frame_height, float scale_factor, node_mode_flags node_modes, bool container_state) {
     RGB tempcolour;
@@ -4320,6 +4423,7 @@ void drawNode(cairo_t *cr, int node, int codeBox_id, int frame_x, int frame_y, _
     }
 //=====================================================
 
+
     if(the_node_group[node].width > 75 && the_node_group[node].height > 35) {
         tempcolour = colorConverter(0xcccccc);
         cairo_set_source_rgb (cr, tempcolour.r, tempcolour.g, tempcolour.b);
@@ -4346,6 +4450,7 @@ void drawNode(cairo_t *cr, int node, int codeBox_id, int frame_x, int frame_y, _
         cairo_show_text (cr, single_row);
 
         head_text_position = header_text_positions[i];
+
     }
 
     i = 0;
@@ -4361,7 +4466,6 @@ void drawNode(cairo_t *cr, int node, int codeBox_id, int frame_x, int frame_y, _
             draw_nodes(cr, the_node_group[node].contained, codeBox_id, x, y+ head_height +spacer + descript_height + spacer, current_nodegroup.node_group[node].width, current_nodegroup.node_group[node].height, children_scale_factor, !container_state);
         }
     }
-
     if(node_modes.to_ignore) {
         drawX(cr, x, y + head_height +spacer + descript_height + spacer, body_width, body_height);
     }
@@ -4426,6 +4530,7 @@ void renderDataNodes(int* nodes, bool allow_previous) {
     }
 
     dynarray_destroy(ordered_nodes);
+
 }
 void renderLineDataNodes(int* nodes, bool allow_previous) {
     int node_priority;
@@ -4496,6 +4601,7 @@ void renderRibbonDataNodes(int* nodes, bool allow_previous, app_widgets *app_wdg
 
     int *ordered_nodes;
 
+
     a_ribbon_element *temp_ribbon_element;
     GtkLabel 	*temp_lbl_head_id;
     GtkLabel 	*temp_lbl_tail_id;
@@ -4507,7 +4613,6 @@ void renderRibbonDataNodes(int* nodes, bool allow_previous, app_widgets *app_wdg
     } else {
         new_wrapping_mode = GTK_WRAP_NONE;
     }
-
     ordered_nodes = rearrange_nodes(nodes);
 
     for(p = 0; p <= 9; p++) {
@@ -4577,24 +4682,23 @@ void renderRibbonDataNodes(int* nodes, bool allow_previous, app_widgets *app_wdg
                                                TRUE, TRUE, 0, GTK_PACK_START);
 
                     //================================================================================
-
                     temp_ribbon_element->node_id = ordered_nodes[j];
                     temp_ribbon_element->codeBox_id = current_codeBox;
 
                     gtk_entry_set_text (temp_ribbon_element->e_txt_codebox_head, current_nodegroup.node_group[ordered_nodes[j]].head);
-                    gtk_container_add (GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element->b_head_strip);
+                    gtk_container_add (GTK_CONTAINER (node_being_edited.b_box_ribbon), temp_ribbon_element->b_head_strip);
                     gtk_widget_show (temp_ribbon_element->e_txt_codebox_head);
                     gtk_widget_show (temp_ribbon_element->b_head_strip);
                     if (dynarray_length(current_nodegroup.node_group[ordered_nodes[j]].contained) == 0) {
                         dynarray_push(rendered_data, ordered_nodes[j]);
                         gtk_text_buffer_set_text(temp_ribbon_element->e_txt_codebox_code, current_nodegroup.node_group[ordered_nodes[j]].real_code, -1);
-                        gtk_container_add (GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element->s_source_view);
+                        gtk_container_add (GTK_CONTAINER (node_being_edited.b_box_ribbon), temp_ribbon_element->s_source_view);
                         gtk_widget_show (temp_ribbon_element->s_source_view);
                     } else {
                         renderRibbonDataNodes(current_nodegroup.node_group[ordered_nodes[j]].contained, false, app_wdgts);
                     }
                     gtk_entry_set_text (temp_ribbon_element->e_txt_codebox_tail, current_nodegroup.node_group[ordered_nodes[j]].tail);
-                    gtk_container_add (GTK_CONTAINER (app_wdgts->b_box_ribbon), temp_ribbon_element->b_tail_strip);
+                    gtk_container_add (GTK_CONTAINER (node_being_edited.b_box_ribbon), temp_ribbon_element->b_tail_strip);
                     gtk_widget_show (temp_ribbon_element->e_txt_codebox_tail);
                     gtk_widget_show (temp_ribbon_element->b_tail_strip);
                     dynarray_push(node_being_edited.editing_ribbon, *temp_ribbon_element);
@@ -4657,7 +4761,6 @@ int main(int argc, char **argv)  {
     widgets->e_txt_codebox_head = GTK_ENTRY(gtk_builder_get_object(builder, "txt_codebox_head"));
     widgets->e_txt_codebox_priority = GTK_ENTRY(gtk_builder_get_object(builder, "txt_codebox_priority"));
     widgets->c_cont_scrollwin = GTK_WIDGET(gtk_builder_get_object(builder, "cont_codebox_sw"));
-    widgets->b_box_ribbon = GTK_WIDGET(gtk_builder_get_object(builder, "bx_ribbon_test"));
     widgets->s_source_view = GTK_SOURCE_VIEW(gtk_builder_get_object(builder, "txt_codebox_code"));
     widgets->e_txt_codebox_code = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(widgets->s_source_view)));
     widgets->e_txt_codebox_tail = GTK_ENTRY(gtk_builder_get_object(builder, "txt_codebox_tail"));
