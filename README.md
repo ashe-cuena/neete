@@ -9,6 +9,8 @@ NEETE, meaning Next Evolution Enhanced Text Editor, is a way in which the progra
 2. Mathematical nodes and arcs.
 
 The entire proposition is carried by the two elements i.e. node and arc, and how these are creatively combined to produce the intended output in a project.
+
+More information can be found on: https://zenodo.org/record/6964616
 ## How to Run it
 So far this progam has been tested on Linux x86 and Raspberry Pi. The code requires GTK3, libgtksourceview and some other few packages to compile. I acquired them with the command:
 ````
@@ -25,7 +27,7 @@ Then the program can be run with the command:
 ## Quick Start
 When the program starts it has a very simple interface which has a toolbar and a canvas.
 
-![Interface on start](/images/typicalinterface.png)
+![Interface on start](/images/typicalinterface2.png)
 
 The toolbar has an entry box for finding line numbers and three radio buttons for the editing mode, which are: ``Move``, ``Contain`` and ``Link``.
 
