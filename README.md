@@ -10,9 +10,15 @@ NEETE, meaning Next Evolution Enhanced Text Editor, is a way in which the progra
 
 The entire proposition is carried by the two elements i.e. node and arc, and how these are creatively combined to produce the intended output in a project.
 
+Example videos can be viewed here: 
+
+		Python: https://www.youtube.com/watch?v=ivHYvmF_0Dg
+
+		C: https://www.youtube.com/watch?v=H9VMLUPa88o
+
 More information can be found on: https://zenodo.org/record/6964616
 
-An example video can be viewed on: https://www.youtube.com/watch?v=H9VMLUPa88o
+
 ## How to Run it
 So far this progam has been tested on Linux x86 and Raspberry Pi. The code requires GTK3, libgtksourceview and some other few packages to compile. I acquired them with the command:
 ````
