@@ -12,9 +12,9 @@ The entire proposition is carried by the two elements i.e. node and arc, and how
 
 Example videos can be viewed here: 
 
-		Python: https://www.youtube.com/watch?v=ivHYvmF_0Dg
+		Hello World, Python: 	https://www.youtube.com/watch?v=ivHYvmF_0Dg
 
-		C: https://www.youtube.com/watch?v=H9VMLUPa88o
+		Hello World, C: 	https://www.youtube.com/watch?v=H9VMLUPa88o
 
 More information can be found on: https://zenodo.org/record/6964616
 
