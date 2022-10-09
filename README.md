@@ -12,7 +12,7 @@ The entire proposition is carried by the two elements i.e. node and arc, and how
 
 Example videos can be viewed here: 
 
-		Hello World, Python: 	[https://www.youtube.com/watch?v=z_R8V6hgUe0](https://www.youtube.com/watch?v=z_R8V6hgUe0)
+		Hello World, Python: 	https://www.youtube.com/watch?v=z_R8V6hgUe0
 
 		Hello World, C: 	https://www.youtube.com/watch?v=H9VMLUPa88o
 
