@@ -10,11 +10,7 @@ NEETE, meaning Next Evolution Enhanced Text Editor, is a way in which the progra
 
 The entire proposition is carried by the two elements i.e. node and arc, and how these are creatively combined to produce the intended output in a project.
 
-Example videos can be viewed here: 
-
-		Hello World, Python: 	https://www.youtube.com/watch?v=z_R8V6hgUe0
-
-		Hello World, C: 	https://www.youtube.com/watch?v=H9VMLUPa88o
+Example videos are available, **Hello World, Python**: https://www.youtube.com/watch?v=z_R8V6hgUe0 and **Hello World, C**: https://www.youtube.com/watch?v=H9VMLUPa88o
 
 More information can be found on: https://zenodo.org/record/6964616
 
